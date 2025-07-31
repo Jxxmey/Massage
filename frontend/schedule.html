@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📄 ตารางกะงาน</title>
+     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2921/2921222.png type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-color: #fff5f8;
+      --text-color: #333;
+      --card-bg: #ffeef5;
+      --card-shadow: rgba(255, 132, 173, 0.2);
+      --header-bg: #ec5c94;
+      --header-text: #fff;
+      --button-bg: #ff80ab;
+      --button-bg-hover: #ec5c94;
+      --cell-border: #f8a5c2;
+
+      --text-color: #333;
+      --card-bg: #fff;
+      --card-shadow: rgba(0,0,0,0.08);
+      --header-bg: #2980b9;
+      --header-text: #fff;
+      --button-bg: #3498db;
+      --button-bg-hover: #2980b9;
+      --cell-border: #ddd;
+    }
+    .dark {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --card-bg: #1f1f1f;
+      --card-shadow: rgba(0,0,0,0.5);
+      --header-bg: #1f1f1f;
+      --header-text: #e0e0e0;
+      --button-bg: #444;
+      --button-bg-hover: #555;
+      --cell-border: #444;
+    }
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: var(--bg-color) url('scheduler-bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      backdrop-filter: blur(4px) brightness(1.05);
+
+      background: var(--bg-color);
+      margin: 0;
+      padding: 20px;
+      color: var(--text-color);
+    }
+    a.back {
+      display: inline-block;
+      margin-bottom: 15px;
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #controls, #sidebar {
+      background: var(--card-bg);
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px var(--card-shadow);
+      margin-bottom: 20px;
+    }
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    #controls label, #controls select, #controls input, #controls button {
+      margin-right: 8px;
+    }
+    #sidebar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    #offs, #special, #legend {
+      flex: 1 1 300px;
+    }
+    select, input {
+      padding: 6px;
+      border: 1px solid var(--cell-border);
+      border-radius: 4px;
+      background: var(--card-bg);
+      color: var(--text-color);
+    }
+    button, #lang-toggle, #theme-toggle {
+      background: var(--button-bg);
+      color: var(--header-text);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover, #lang-toggle:hover, #theme-toggle:hover {
+      background: var(--button-bg-hover);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      background: var(--card-bg);
+      box-shadow: 0 1px 4px var(--card-shadow);
+    }
+    th, td {
+      border: 1px solid var(--cell-border);
+      padding: 6px;
+      text-align: center;
+      font-size: 13px;
+      white-space: pre-line;
+      background: var(--card-bg);
+      color: var(--text-color);
+    }
+    th {
+      background: var(--header-bg);
+      color: var(--header-text);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    td:first-child { font-weight: 500; }
+    .shift-A { background: #aed6f1; }
+    .shift-B { background: #a9dfbf; }
+    .shift-L { background: #33FFFF; }
+    .shift-C { background: #f9e79f; }
+    .shift-PD { background: #fadbd8; }
+    .shift-LA { background: #d6eaf8; }
+    .shift-S { background: #f5cba7; }
+    .shift-OFF { background: #FF4500; }
+    #table-container, #summary-container { overflow-x: auto; }
+    .holiday-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .delete-btn { background: transparent; color: red; border: none; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header>
+     <a href="index.html" class="back">← กลับหน้าหลัก</a>
+   <h2 id="title">📄 ตารางกะงาน</h2>
+    <div>
+      <select id="month"></select>
+      <input type="number" id="year" min="2000" />
+      <button id="load-btn">โหลด</button>
+      <button id="theme-toggle">🌙</button>
+      <button id="lang-toggle">EN</button>
+    </div>
+  </header>
+  <div id="table-container"></div>
+
+  <script>
+    let lang = 'th';
+    let employees = []; 
+    const shifts = ['','A','B','L','C','PD','S','LA','OFF'];
+    const daysOfWeek = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+    const translations = {
+      th: { title: '📄 ตารางกะงาน', employee: 'พนักงาน' },
+      en: { title: '📄 Shift Schedule', employee: 'Employee' }
+    };
+
+    const defaultHolidays = [
+      {date:'2025-01-01',th:'วันขึ้นปีใหม่',en:"New Year's Day"},
+      {date:'2025-02-12',th:'วันมาฆบูชา',en:'Makha Bucha'},
+      {date:'2025-04-13',th:'วันสงกรานต์',en:'Songkran'},
+      {date:'2025-05-01',th:'วันแรงงาน',en:'Labour Day'},
+      {date:'2025-07-28',th:'วันเฉลิมฯ ร.10',en:'King Maha BD'},
+      {date:'2025-08-12',th:'วันแม่แห่งชาติ',en:"Mother’s Day"},
+      {date:'2025-10-23',th:'วันปิยมหาราช',en:'Chulalongkorn Day'},
+      {date:'2025-12-05',th:'วันพ่อแห่งชาติ',en:"Father’s Day"},
+      {date:'2025-12-31',th:'วันสิ้นปี',en:'New Year Eve'}
+    ];
+    let holidays = [];
+
+    const monthSel = document.getElementById('month');
+    const yearInput = document.getElementById('year');
+    const container = document.getElementById('table-container');
+    const title = document.getElementById('title');
+
+    for (let i = 1; i <= 12; i++) {
+      const opt = new Option(i, i);
+      monthSel.appendChild(opt);
+    }
+    const today = new Date();
+    monthSel.value = today.getMonth() + 1;
+    yearInput.value = today.getFullYear();
+
+    document.getElementById('load-btn').onclick = loadSchedule;
+    document.getElementById('theme-toggle').onclick = () => {
+      document.documentElement.classList.toggle('dark');
+    };
+    document.getElementById('lang-toggle').onclick = () => {
+      lang = lang === 'th' ? 'en' : 'th';
+      document.getElementById('lang-toggle').innerText = lang === 'th' ? 'EN' : 'ไทย';
+      title.innerText = translations[lang].title;
+      loadSchedule();
+    };
+
+    async function loadHolidaysAndEmployeesFromAPI() {
+      try {
+        const [holidaysRes, employeesRes] = await Promise.all([
+          fetch('/api/holidays'),
+          fetch('/api/employees')
+        ]);
+        const customHolidays = await holidaysRes.json();
+        const empData = await employeesRes.json();
+        employees = empData.map(e => e.name);
+        holidays = [...defaultHolidays, ...customHolidays];
+      } catch (e) {
+        console.error('❌ โหลดข้อมูลล้มเหลว', e);
+        // ใช้ค่า default หากโหลดไม่ได้
+        employees = ["K.Nu", "K.Ning", "K.Chaaem", "K.Som"];
+        holidays = [...defaultHolidays];
+      }
+    }
+
+    async function loadSchedule() {
+      const m = String(monthSel.value).padStart(2, '0');
+      const y = yearInput.value;
+      
+      await loadHolidaysAndEmployeesFromAPI();
+
+      try {
+        const response = await fetch(`/api/schedules/${y}/${m}`);
+        const doc = await response.json();
+        if (!doc || !doc.schedule) {
+          container.innerHTML = 'ไม่พบข้อมูล';
+          return;
+        }
+        const schedule = doc.schedule;
+        renderTable(schedule, +y, +m, holidays, employees);
+      } catch (e) {
+        console.error('❌ โหลดตารางล้มเหลว', e);
+        container.innerHTML = 'ไม่พบข้อมูล';
+      }
+    }
+
+    function renderTable(data, year, month, holidays, employees) {
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const table = document.createElement('table');
+      const thead = table.createTHead();
+      const headRow = thead.insertRow();
+      headRow.insertCell().innerText = translations[lang].employee;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const day = new Date(year, month - 1, d).getDay();
+        const th = headRow.insertCell();
+        th.innerText = `${d}\n${lang === 'th' ? daysOfWeek[day] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][day]}`;
+      }
+
+      const tbody = table.createTBody();
+
+      const holidayRow = tbody.insertRow();
+      holidayRow.insertCell().innerText = lang === 'th' ? 'วันหยุดพิเศษ' : 'Public Holiday';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const td = holidayRow.insertCell();
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const h = holidays.find(h => h.date === dateStr);
+        if (h) {
+          td.innerText = 'PD';
+          td.classList.add('shift-PD');
+          td.title = h[lang] || h.th;
+        }
+      }
+
+      employees.forEach(name => {
+        const rowObj = data.find(r => r.c0 === name) || {};
+        const tr = tbody.insertRow();
+        tr.insertCell().innerText = name;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const td = tr.insertCell();
+          const val = rowObj[`c${d}`] || '';
+          td.innerText = val;
+          if (shifts.includes(val)) td.classList.add(`shift-${val}`);
+        }
+      });
+      
+      container.innerHTML = '';
+      container.appendChild(table);
+      container.appendChild(document.createElement('br'));
+      container.appendChild(buildSummaryTable(data, daysInMonth, employees));
+    }
+
+    
+    function buildSummaryTable(data, daysInMonth, employees) {
+      const summaryTable = document.createElement('table');
+      const summaryThead = summaryTable.createTHead();
+      const summaryHeadRow = summaryThead.insertRow();
+      summaryHeadRow.insertCell().innerText = translations[lang].employee;
+
+      shifts.filter(s => s).forEach(s => {
+        const th = summaryHeadRow.insertCell();
+        th.innerText = s;
+      });
+
+      const summaryTbody = summaryTable.createTBody();
+      employees.forEach(name => {
+        const rowObj = data.find(r => r.c0 === name) || {};
+        const tr = summaryTbody.insertRow();
+        tr.insertCell().innerText = name;
+
+        const counts = Object.fromEntries(shifts.map(s => [s, 0]));
+        for (let d = 1; d <= daysInMonth; d++) {
+          const val = rowObj[`c${d}`] || '';
+          if (shifts.includes(val)) counts[val]++;
+        }
+
+        shifts.filter(s => s).forEach(s => {
+          const td = tr.insertCell();
+          td.innerText = counts[s];
+        });
+      });
+
+      return summaryTable;
+    }
+
+    window.onload = () => {
+      loadSchedule();
+    };
+  </script>
+</body>
+</html>

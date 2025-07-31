@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>เมนูหลัก</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background: url('bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Kanit', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 140px);
+      grid-gap: 30px;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+    }
+    .app-icon {
+      width: 140px;
+      height: 140px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .app-icon:hover {
+      transform: scale(1.05);
+    }
+    .app-icon img {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 10px;
+    }
+    .app-label {
+      font-size: 16px;
+      color: #333;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="app-icon" onclick="location.href='schedule.html'">
+      <img src="https://cdn-icons-png.flaticon.com/512/2921/2921222.png" alt="schedule" />
+      <div class="app-label">ตารางกะงาน</div>
+    </div>
+    <div class="app-icon" onclick="gotoShift()">
+      <img src="https://cdn-icons-png.flaticon.com/512/1828/1828911.png" alt="manage" />
+      <div class="app-label">จัดการกะงาน</div>
+    </div>
+	    <div class="app-icon" onclick="location.href='Saleview.html'">
+      <img src="https://cdn-icons-png.flaticon.com/512/3588/3588658.png" alt="manage" />
+      <div class="app-label">บันทึกยอดขายรายวัน</div>
+    </div>
+  </div>
+
+  <script>
+function gotoShift() {
+  location.href = 'login.html'; // ← เด้งไป login เสมอ
+}
+
+  </script>
+</body>
+</html>

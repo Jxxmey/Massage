@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการพนักงาน</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1000/1000078.png" type="image/png" />
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .employee-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .employee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--cell-border);
+        }
+        .employee-item:last-child {
+            border-bottom: none;
+        }
+        .employee-name {
+            font-size: 1.1em;
+            color: var(--text-color);
+        }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+        #add-employee-form {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        #add-employee-form input {
+            flex-grow: 1;
+        }
+        #add-employee-btn {
+            background: var(--button-bg);
+            color: var(--header-text);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #add-employee-btn:hover {
+            background: var(--button-bg-hover);
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back">← กลับหน้าหลัก</a>
+    <div class="container">
+        <h1>👥 จัดการรายชื่อพนักงาน</h1>
+
+        <ul class="employee-list" id="employee-list"></ul>
+        
+        <form id="add-employee-form">
+            <input type="text" id="new-employee-name" placeholder="เพิ่มชื่อพนักงาน" required>
+            <button type="submit" id="add-employee-btn">เพิ่ม</button>
+        </form>
+    </div>
+
+    <script>
+        const employeeList = document.getElementById('employee-list');
+        const newEmployeeNameInput = document.getElementById('new-employee-name');
+        const addEmployeeForm = document.getElementById('add-employee-form');
+        
+        async function loadEmployees() {
+            try {
+                const response = await fetch('/api/employees');
+                const employees = await response.json();
+                renderEmployees(employees);
+            } catch (e) {
+                console.error('Failed to load employees:', e);
+                employeeList.innerHTML = '<li>ไม่สามารถโหลดรายชื่อพนักงานได้</li>';
+            }
+        }
+
+        function renderEmployees(employees) {
+            employeeList.innerHTML = '';
+            employees.forEach(employee => {
+                const li = document.createElement('li');
+                li.className = 'employee-item';
+                li.dataset.id = employee._id;
+                li.innerHTML = `
+                    <span class="employee-name">${employee.name}</span>
+                    <button class="delete-btn" onclick="deleteEmployee('${employee._id}')">ลบ</button>
+                `;
+                employeeList.appendChild(li);
+            });
+        }
+
+        async function addEmployee(name) {
+            try {
+                const response = await fetch('/api/employees', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                });
+                if (!response.ok) throw new Error('Failed to add employee');
+                newEmployeeNameInput.value = '';
+                loadEmployees();
+            } catch (e) {
+                alert('เพิ่มพนักงานไม่สำเร็จ: ' + e.message);
+            }
+        }
+
+        async function deleteEmployee(id) {
+            if (!confirm('ยืนยันการลบพนักงาน?')) return;
+            try {
+                const response = await fetch(`/api/employees/${id}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error('Failed to delete employee');
+                loadEmployees();
+            } catch (e) {
+                alert('ลบพนักงานไม่สำเร็จ: ' + e.message);
+            }
+        }
+
+        addEmployeeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = newEmployeeNameInput.value.trim();
+            if (name) {
+                addEmployee(name);
+            }
+        });
+
+        window.onload = loadEmployees;
+        window.deleteEmployee = deleteEmployee;
+    </script>
+</body>
+</html>
