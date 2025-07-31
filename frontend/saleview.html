@@ -1,51 +1,57 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <title>ระบบบันทึกยอดขาย</title>
-   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3588/3588658.png" type="image/png" />
-  <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+ <meta charset="UTF-8">
+ <title>ระบบบันทึกยอดขาย</title>
+ <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3588/3588658.png" type="image/png" />
+ <link rel="stylesheet" href="style.css">
+ <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+ 
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-  <h1>📊 ระบบบันทึกยอดขายรายวัน</h1>
-  <a href="index.html" class="back">← กลับหน้าหลัก</a>
-    <div class="toolbar">
-    <button onclick="openPopup()">➕ Add</button>
-    <button id="edit-btn" disabled>✏️ Edit</button>
-    <button id="delete-btn" disabled onclick="deleteEntry()">❌ Cancel</button>
-  <button id="theme-toggle">🌙</button></div>
+ <h1>📊 ระบบบันทึกยอดขายรายวัน</h1>
+ <a href="index.html" class="back">← กลับหน้าหลัก</a>
+  <div class="toolbar">
+  <button onclick="openPopup()">➕ Add</button>
+  <button id="edit-btn" disabled>✏️ Edit</button>
+  <button id="delete-btn" disabled onclick="deleteEntry()">❌ Cancel</button>
+  <button id="export-pdf">ส่งออก PDF</button>
+  <button id="export-excel">ส่งออก Excel</button>
+ <button id="theme-toggle">🌙</button></div>
 <div>
-    <label>จาก <input type="date" id="startDate" onchange="loadSales()"></label>
-    <label>ถึง <input type="date" id="endDate" onchange="loadSales()"></label>
-  </div>
-    <div id="sales-list"></div>
+  <label>จาก <input type="date" id="startDate" onchange="loadSales()"></label>
+  <label>ถึง <input type="date" id="endDate" onchange="loadSales()"></label>
+ </div>
+  <div id="sales-list"></div>
 
-    <div id="popup" class="popup hidden">
-    <div class="popup-content">
-      <h2>เพิ่มรายการยอดขาย</h2>
-      <form id="add-form">
-        <label>📅 วันที่ <input type="date" name="date" required></label>
-        <label>🧴 Staff Oil (บาท) <input type="number" name="staffOil" step="0.01"></label>
-        <label>👥 Customers (คน) <input type="number" name="customers"></label>
-        <label>💰 Total income (บาท) <input type="number" name="income" step="0.01"></label>
-        <label>📈 Commission <input type="number" name="commission" step="0.01"></label>
-        <label>💹 Extra Commission <input type="number" name="extraCommission" step="0.01"></label>
-        <label>💸 Expense <input type="number" name="expense" step="0.01"></label>
-        <label>💳 Credit Card <input type="number" name="creditCard" step="0.01" oninput="updateTotalPreview()"></label>
-        <label>📊 Total Credit Card <input type="number" id="totalCreditPreview" disabled></label>
-        <label>💵 Cash <input type="number" name="cash" step="0.01" oninput="updateTotalPreview()"></label>
-        <label>📊 Total Cash <input type="number" id="totalCashPreview" disabled></label>
-        <label>🕓 เวลาเปิด <input type="time" name="timeOpen"></label>
-    <label>🕕 เวลาปิด <input type="time" name="timeClose"></label>
+  <div id="popup" class="popup hidden">
+  <div class="popup-content">
+  <h2>เพิ่มรายการยอดขาย</h2>
+  <form id="add-form">
+   <label>📅 วันที่ <input type="date" name="date" required></label>
+   <label>🧴 Staff Oil (บาท) <input type="number" name="staffOil" step="0.01"></label>
+   <label>👥 Customers (คน) <input type="number" name="customers"></label>
+   <label>💰 Total income (บาท) <input type="number" name="income" step="0.01"></label>
+   <label>📈 Commission <input type="number" name="commission" step="0.01"></label>
+   <label>💹 Extra Commission <input type="number" name="extraCommission" step="0.01"></label>
+   <label>💸 Expense <input type="number" name="expense" step="0.01"></label>
+   <label>💳 Credit Card <input type="number" name="creditCard" step="0.01" oninput="updateTotalPreview()"></label>
+   <label>📊 Total Credit Card <input type="number" id="totalCreditPreview" disabled></label>
+   <label>💵 Cash <input type="number" name="cash" step="0.01" oninput="updateTotalPreview()"></label>
+   <label>📊 Total Cash <input type="number" id="totalCashPreview" disabled></label>
+   <label>🕓 เวลาเปิด <input type="time" name="timeOpen"></label>
+  <label>🕕 เวลาปิด <input type="time" name="timeClose"></label>
 
 
-        <button type="submit">💾 บันทึก</button>
-        <button type="button" onclick="closePopup()">❌ ยกเลิก</button>
-      </form>
-    </div>
-  </div>
-  
+   <button type="submit">💾 บันทึก</button>
+   <button type="button" onclick="closePopup()">❌ ยกเลิก</button>
+  </form>
+  </div>
+ </div>
+ 
 <script>
     // ** URL Backend ที่ Deploy บน Render **
     const RENDER_BACKEND_URL = 'https://ub-backend.onrender.com';
@@ -239,7 +245,7 @@
 
             const form = document.getElementById("add-form");
 
-            form.date.value = data.date.split("T")[0]; // Assuming date is in ISO format
+            form.date.value = data.date.split("T")[0];
             form.staffOil.value = data.staffOil || "";
             form.customers.value = data.customers || "";
             form.income.value = data.income || "";
@@ -257,6 +263,65 @@
             alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
         }
     });
+    
+    // ** เพิ่มฟังก์ชัน Export PDF **
+    async function exportToPdf() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l');
+        
+        const startDate = document.getElementById("startDate").value;
+        const endDate = document.getElementById("endDate").value;
+        
+        const tableHeaders = ["วันที่", "Staff Oil", "Customers", "Income", "Commission", "Extra", "Expense", "Credit", "Cash", "เวลา"];
+        const tableData = [];
+        
+        const salesRows = document.querySelectorAll("#sales-list tbody tr");
+        if (salesRows.length === 0) {
+            alert("ไม่มีข้อมูลให้ Export");
+            return;
+        }
+        
+        salesRows.forEach(row => {
+            const rowData = [];
+            row.querySelectorAll('td').forEach((cell, index) => {
+                if (index < 8 || index > 9) { // ข้ามคอลัมน์ Total Credit และ Total Cash
+                     rowData.push(cell.innerText);
+                }
+            });
+            tableData.push(rowData);
+        });
+
+        doc.text(`รายงานยอดขายรายวัน`, 15, 15);
+        doc.text(`จากวันที่ ${startDate} ถึง ${endDate}`, 15, 22);
+
+        doc.autoTable({
+            startY: 28,
+            head: [tableHeaders],
+            body: tableData,
+            theme: 'grid',
+            styles: { font: 'Kanit' }
+        });
+
+        doc.save(`ยอดขาย-${startDate}-${endDate}.pdf`);
+    }
+
+    // ** เพิ่มฟังก์ชัน Export Excel **
+    async function exportToExcel() {
+        const table = document.querySelector("#sales-list table");
+        if (!table) {
+            alert("ไม่มีข้อมูลให้ Export");
+            return;
+        }
+        
+        const ws = XLSX.utils.table_to_sheet(table);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "ยอดขาย");
+        
+        const startDate = document.getElementById("startDate").value;
+        const endDate = document.getElementById("endDate").value;
+        
+        XLSX.writeFile(wb, `ยอดขาย-${startDate}-${endDate}.xlsx`);
+    }
 
     window.loadSales = loadSales;
     window.selectEntry = selectEntry;
@@ -264,6 +329,9 @@
     window.openPopup = openPopup;
     window.closePopup = closePopup;
     window.updateTotalPreview = updateTotalPreview;
+    
+    document.getElementById("export-excel").addEventListener("click", exportToExcel);
+    document.getElementById("export-pdf").addEventListener("click", exportToPdf);
 
     // โหลดครั้งแรก
     window.onload = () => {

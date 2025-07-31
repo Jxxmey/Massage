@@ -27,7 +27,7 @@
     <label data-i18n="year"></label>
     <input type="number" id="year" min="2000" />
     <button id="export-excel" data-i18n="exportExcel"></button>
-    <button id="export-pdf" data-i18n="exportPdf"></button>
+    <button id="export-pdf" data-i118n="exportPdf"></button>
     <button id="save-cloud" data-i18n="saveCloud"></button>
   </section>
 
@@ -104,7 +104,8 @@
     {val:5,th:'ศุกร์',en:'Fri'},
     {val:6,th:'เสาร์',en:'Sat'}];
     let employees = [];
-    const shifts=['','A','B','L','C','PD','S','LA','OFF'];
+    let shifts = []; 
+    let shiftDescriptions = {}; 
     const weeklyOff={};
 
     // Helpers
@@ -163,28 +164,89 @@
     }
     function bindHolidayControls(){ addHolidayBtn.onclick=()=>{ const d=newHolidayDate.value,n=newHolidayName.value.trim(); if(!d||!n)return; holidays.push({date:d,th:n,en:n}); newHolidayDate.value=newHolidayName.value=''; redrawAll(); }; }
     function renderHolidayList(){ publicHolidayList.innerHTML=''; const {month,year}=currentMY(); holidays.filter(h=>h.date.startsWith(`${year}-${String(month).padStart(2,'0')}`)).sort((a,b)=>a.date.localeCompare(b.date)).forEach(h=>{ const li=document.createElement('li'); li.className='holiday-item'; li.innerHTML=`<span>${h.date.slice(-2)}/${h.date.slice(5,7)}   ${lang==='th'?h.th:h.en}</span>`; const del=document.createElement('button'); del.className='delete-btn'; del.textContent='✕'; del.onclick=()=>{holidays=holidays.filter(x=>x!==h); redrawAll();}; li.appendChild(del); publicHolidayList.appendChild(li); }); }
+    
+    // ปรับปรุงฟังก์ชัน initOffInputs
     function initOffInputs(){ offInputs.innerHTML=''; employees.forEach(e=>{ const div=document.createElement('div'); div.innerHTML=`${e}: `; const sel=document.createElement('select'); daysOfWeek.forEach(dw=>sel.appendChild(new Option(lang==='th'?dw.th:dw.en,dw.val))); sel.value=weeklyOff[e]||''; sel.onchange=()=>{ weeklyOff[e]=sel.value===''?null:+sel.value; redrawAll(); }; div.appendChild(sel); offInputs.appendChild(div); }); }
-    function buildSchedule(){ const {month,year}=currentMY(); const days=new Date(year,month,0).getDate(); const tbl=document.createElement('table'); const thead=tbl.createTHead(), row=thead.insertRow(); row.appendChild(document.createElement('th')).innerText=translations[lang].employee; for(let d=1;d<=days;d++){ const dow=new Date(year,month-1,d).getDay(); const th=document.createElement('th'); th.innerText=`${d}\n${lang==='th'?daysOfWeek[dow].th:daysOfWeek[dow].en}`; row.appendChild(th);} const tbody=tbl.appendChild(document.createElement('tbody')); const holTr=tbody.insertRow(); holTr.appendChild(document.createElement('td')).innerText=translations[lang].publicHolidays; for(let d=1;d<=days;d++){ const td=holTr.insertCell(); const iso=`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`; if(holidays.find(h=>h.date===iso)){td.innerText='PD';td.classList.add('shift-PD');}} employees.forEach(emp=>{ const tr=tbody.insertRow(); const td=document.createElement('td');
+    
+    // ปรับปรุงฟังก์ชัน buildSchedule
+    function buildSchedule(){ 
+      const {month,year}=currentMY(); 
+      const days=new Date(year,month,0).getDate(); 
+      const tbl=document.createElement('table'); 
+      const thead=tbl.createTHead(), row=thead.insertRow(); 
+      row.appendChild(document.createElement('th')).innerText=translations[lang].employee; 
+      for(let d=1;d<=days;d++){ 
+        const dow=new Date(year,month-1,d).getDay(); 
+        const th=document.createElement('th'); 
+        th.innerText=`${d}\n${lang==='th'?daysOfWeek[dow].th:daysOfWeek[dow].en}`; 
+        row.appendChild(th);
+      } 
+      const tbody=tbl.appendChild(document.createElement('tbody')); 
+      const holTr=tbody.insertRow(); 
+      holTr.appendChild(document.createElement('td')).innerText=translations[lang].publicHolidays; 
+      for(let d=1;d<=days;d++){ 
+        const td=holTr.insertCell(); 
+        const iso=`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`; 
+        if(holidays.find(h=>h.date===iso)){
+          td.innerText='PD';
+          td.classList.add('shift-PD');
+        }
+      } 
+      employees.forEach(emp=>{ 
+        const tr=tbody.insertRow(); 
+        const td=document.createElement('td');
         td.innerText=emp;
-        
-        
-        td.addEventListener('drop',()=> {
-          
-        });
-        tr.appendChild(td); for(let d=1;d<=days;d++){ const td=tr.insertCell(); const sel=document.createElement('select'); shifts.forEach(s=>sel.appendChild(new Option(s,s))); sel.oninput=()=>{colorShift(td,sel.value);      updateSummary();
-      const btn = document.getElementById('save-cloud');
-      btn.innerText = '✅ โหลดเสร็จแล้ว';
-      setTimeout(() => btn.innerText = translations[lang].saveCloud, 2000);
-}; td.appendChild(sel); const date=new Date(year,month-1,d); if(weeklyOff[emp]!=null&&date.getDay()===weeklyOff[emp]){ sel.value='OFF';colorShift(td,'OFF');}}}); return tbl; }
+        td.addEventListener('drop',()=> {});
+        tr.appendChild(td); 
+        for(let d=1;d<=days;d++){ 
+          const td=tr.insertCell(); 
+          const sel=document.createElement('select'); 
+          shifts.forEach(s=>sel.appendChild(new Option(s,s)));
+          sel.oninput=()=>{
+            colorShift(td,sel.value);      
+            updateSummary();
+            const btn = document.getElementById('save-cloud');
+            btn.innerText = '✅ โหลดเสร็จแล้ว';
+            setTimeout(() => btn.innerText = translations[lang].saveCloud, 2000);
+          }; 
+          td.appendChild(sel); 
+          const date=new Date(year,month-1,d); 
+          if(weeklyOff[emp]!=null&&date.getDay()===weeklyOff[emp]){ 
+            sel.value='OFF';
+            colorShift(td,'OFF');
+          }
+        }
+      }); 
+      return tbl; 
+    }
+    
+    // ปรับปรุงฟังก์ชัน updateSummary และ buildSummary
     function updateSummary(){ summaryContainer.innerHTML=''; summaryContainer.appendChild(buildSummary()); }
-    function buildSummary(){ const tbl=document.createElement('table'); const thead=tbl.createTHead(), row=thead.insertRow(); row.appendChild(document.createElement('th')).innerText=translations[lang].employee; shifts.filter(s=>s).forEach(s=>row.appendChild(document.createElement('th')).innerText=s); const tbody=tbl.appendChild(document.createElement('tbody')); employees.forEach(emp=>{ const tr=tbody.insertRow(); const td=document.createElement('td');
+    function buildSummary(){ 
+      const tbl=document.createElement('table'); 
+      const thead=tbl.createTHead(), row=thead.insertRow(); 
+      row.appendChild(document.createElement('th')).innerText=translations[lang].employee; 
+      shifts.filter(s=>s).forEach(s=>row.appendChild(document.createElement('th')).innerText=s); 
+      const tbody=tbl.appendChild(document.createElement('tbody')); 
+      employees.forEach(emp=>{ 
+        const tr=tbody.insertRow(); 
+        const td=document.createElement('td');
         td.innerText=emp;
         
         
         td.addEventListener('drop',()=> {
           
         });
-        tr.appendChild(td); const counts=Object.fromEntries(shifts.map(s=>[s,0])); document.querySelectorAll('#table-container tbody tr').forEach(r=>{ if(r.firstChild.innerText===emp) r.querySelectorAll('td select').forEach(sel=>counts[sel.value]++); }); shifts.filter(s=>s).forEach(s=>tr.appendChild(document.createElement('td')).innerText=counts[s]); }); return tbl; }
+        tr.appendChild(td); 
+        const counts=Object.fromEntries(shifts.map(s=>[s,0])); 
+        document.querySelectorAll('#table-container tbody tr').forEach(r=>{ 
+          if(r.firstChild.innerText===emp) 
+            r.querySelectorAll('td select').forEach(sel=>counts[sel.value]++); 
+        }); 
+        shifts.filter(s=>s).forEach(s=>tr.appendChild(document.createElement('td')).innerText=counts[s]); 
+      }); 
+      return tbl; 
+    }
     function redrawAll(){ setTexts(); renderHolidayList(); tableContainer.innerHTML=''; tableContainer.appendChild(buildSchedule()); updateSummary(); }
 
     // EXPORT
@@ -264,18 +326,38 @@
 
     async function loadEmployeesAndHolidays() {
       try {
-        const [empRes, holRes] = await Promise.all([
+        const [empRes, holRes, shiftRes] = await Promise.all([
           fetch(`${RENDER_BACKEND_URL}/api/employees`),
-          fetch(`${RENDER_BACKEND_URL}/api/holidays`)
+          fetch(`${RENDER_BACKEND_URL}/api/holidays`),
+          fetch(`${RENDER_BACKEND_URL}/api/shifts`)
         ]);
         const empData = await empRes.json();
-        employees = empData.map(e => e.name); // ดึงเฉพาะ name มาใช้งาน
+        employees = empData.map(e => e.Name); // ดึงจากฟิลด์ 'Name'
         const customHolidays = await holRes.json();
         holidays = [...defaultHolidays, ...customHolidays];
+        const shiftData = await shiftRes.json();
+        // สร้าง Shift descriptions และ shifts array
+        shiftDescriptions = shiftData.reduce((acc, s) => {
+            acc[s.name] = s.desc;
+            return acc;
+        }, {});
+        shifts = [''].concat(shiftData.map(s => s.name));
+        
+        // อัปเดต legend ในหน้าเว็บ
+        const legendList = document.querySelector('#legend ul');
+        legendList.innerHTML = '';
+        shifts.filter(s => s).forEach(s => {
+            const li = document.createElement('li');
+            li.innerHTML = `<li><span class="shift-${s}">${s}</span>   ${shiftDescriptions[s] || ''}</li>`;
+            legendList.appendChild(li);
+        });
+
       } catch (e) {
-        console.error('❌ โหลดข้อมูลพนักงานและวันหยุดล้มเหลว', e);
-        employees = ["K.Nu", "K.Ning", "K.Chaaem", "K.Som"]; // ใช้ค่า default
+        console.error('❌ โหลดข้อมูลล้มเหลว', e);
+        // ใช้ค่า default หากการโหลดล้มเหลว
+        employees = ["K.Nu", "K.Ning", "K.Chaaem", "K.Som"]; 
         holidays = [...defaultHolidays];
+        shifts = ['','A','B','L','C','PD','S','LA','OFF'];
       }
     }
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>📄 ตารางกะงาน</title>
-     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2921/2921222.png type="image/png" />
+     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2921/2921222.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -216,7 +216,7 @@
         ]);
         const customHolidays = await holidaysRes.json();
         const empData = await employeesRes.json();
-        employees = empData.map(e => e.name);
+        employees = empData.map(e => e.Name); // แก้ไขจาก e.name เป็น e.Name
         holidays = [...defaultHolidays, ...customHolidays];
       } catch (e) {
         console.error('❌ โหลดข้อมูลล้มเหลว', e);
