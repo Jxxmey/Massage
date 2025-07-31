@@ -63,6 +63,9 @@
   </section>
 
   <script>
+    // ** เปลี่ยน URL ตรงนี้ให้เป็น URL ของ Backend ที่คุณ Deploy บน Render **
+    const RENDER_BACKEND_URL = 'https://your-render-app-name.onrender.com';
+
     // Theme toggle
     const themeToggle = document.getElementById('theme-toggle');
     const darkMode = localStorage.getItem('darkMode') === 'true';
@@ -203,7 +206,7 @@
       };
       
       try {
-        const response = await fetch('/api/schedules', {
+        const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -222,7 +225,7 @@
     // LOAD from MongoDB
     async function loadScheduleFromMongoDB(){
       const { month, year } = currentMY();
-      const url = `/api/schedules/${year}/${month}`;
+      const url = `${RENDER_BACKEND_URL}/api/schedules/${year}/${month}`;
       try {
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to load schedule');
@@ -262,8 +265,8 @@
     async function loadEmployeesAndHolidays() {
       try {
         const [empRes, holRes] = await Promise.all([
-          fetch('/api/employees'),
-          fetch('/api/holidays')
+          fetch(`${RENDER_BACKEND_URL}/api/employees`),
+          fetch(`${RENDER_BACKEND_URL}/api/holidays`)
         ]);
         const empData = await empRes.json();
         employees = empData.map(e => e.name); // ดึงเฉพาะ name มาใช้งาน

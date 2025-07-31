@@ -159,6 +159,9 @@
   <div id="table-container"></div>
 
   <script>
+    // ** เปลี่ยน URL ตรงนี้ให้เป็น URL ของ Backend ที่คุณ Deploy บน Render **
+    const RENDER_BACKEND_URL = 'https://your-render-app-name.onrender.com';
+
     let lang = 'th';
     let employees = []; 
     const shifts = ['','A','B','L','C','PD','S','LA','OFF'];
@@ -208,8 +211,8 @@
     async function loadHolidaysAndEmployeesFromAPI() {
       try {
         const [holidaysRes, employeesRes] = await Promise.all([
-          fetch('/api/holidays'),
-          fetch('/api/employees')
+          fetch(`${RENDER_BACKEND_URL}/api/holidays`),
+          fetch(`${RENDER_BACKEND_URL}/api/employees`)
         ]);
         const customHolidays = await holidaysRes.json();
         const empData = await employeesRes.json();
@@ -230,7 +233,7 @@
       await loadHolidaysAndEmployeesFromAPI();
 
       try {
-        const response = await fetch(`/api/schedules/${y}/${m}`);
+        const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules/${y}/${m}`);
         const doc = await response.json();
         if (!doc || !doc.schedule) {
           container.innerHTML = 'ไม่พบข้อมูล';

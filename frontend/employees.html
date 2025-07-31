@@ -81,13 +81,16 @@
     </div>
 
     <script>
+        // ** เปลี่ยน URL ตรงนี้ให้เป็น URL ของ Backend ที่คุณ Deploy บน Render **
+        const RENDER_BACKEND_URL = 'https://your-render-app-name.onrender.com';
+
         const employeeList = document.getElementById('employee-list');
         const newEmployeeNameInput = document.getElementById('new-employee-name');
         const addEmployeeForm = document.getElementById('add-employee-form');
         
         async function loadEmployees() {
             try {
-                const response = await fetch('/api/employees');
+                const response = await fetch(`${RENDER_BACKEND_URL}/api/employees`);
                 const employees = await response.json();
                 renderEmployees(employees);
             } catch (e) {
@@ -112,7 +115,7 @@
 
         async function addEmployee(name) {
             try {
-                const response = await fetch('/api/employees', {
+                const response = await fetch(`${RENDER_BACKEND_URL}/api/employees`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: name })
@@ -128,7 +131,7 @@
         async function deleteEmployee(id) {
             if (!confirm('ยืนยันการลบพนักงาน?')) return;
             try {
-                const response = await fetch(`/api/employees/${id}`, {
+                const response = await fetch(`${RENDER_BACKEND_URL}/api/employees/${id}`, {
                     method: 'DELETE'
                 });
                 if (!response.ok) throw new Error('Failed to delete employee');
