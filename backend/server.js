@@ -64,9 +64,16 @@ const scheduleSchema = new mongoose.Schema({
   summary: Array,
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'schedules' });
-
 scheduleSchema.index({ year: 1, month: 1 }, { unique: true });
 const Schedule = mongoose.model('Schedule', scheduleSchema);
+
+// **เพิ่ม Schema สำหรับ Holiday**
+const holidaySchema = new mongoose.Schema({
+  date: { type: String, required: true, unique: true },
+  th: { type: String, required: true },
+  en: { type: String, required: true },
+});
+const Holiday = mongoose.model('Holiday', holidaySchema);
 
 // --- Middleware ตรวจสอบ DB ---
 const checkDbConnection = (req, res, next) => {
@@ -153,14 +160,12 @@ app.get('/api/employees', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error fetching employees', error: error.message });
   }
 });
-
 app.post('/api/employees', checkDbConnection, async (req, res) => {
   try {
     const { Name, Position } = req.body;
     if (!Name) {
       return res.status(400).json({ message: 'Employee Name is required.' });
     }
-    // สร้าง _id จาก Name
     const newEmployee = new Employee({
       _id: Name,
       Name: Name,
@@ -173,14 +178,11 @@ app.post('/api/employees', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error saving employee', error: error.message });
   }
 });
-
-// ** เพิ่ม API สำหรับแก้ไขข้อมูลพนักงาน **
 app.put('/api/employees/:id', checkDbConnection, async (req, res) => {
   try {
     const { id } = req.params;
     const { Name, Position } = req.body;
     
-    // ถ้ามีการแก้ไขชื่อ ต้องลบอันเก่าและสร้างอันใหม่
     if (id !== Name) {
       const oldEmployee = await Employee.findById(id);
       if (oldEmployee) {
@@ -190,8 +192,6 @@ app.put('/api/employees/:id', checkDbConnection, async (req, res) => {
       const savedEmployee = await newEmployee.save();
       return res.json(savedEmployee);
     }
-
-    // ถ้าแก้ไขแค่ Position
     const updatedEmployee = await Employee.findByIdAndUpdate(id, { Name, Position }, { new: true, runValidators: true });
     if (!updatedEmployee) {
       return res.status(404).json({ message: 'Employee not found' });
@@ -202,8 +202,6 @@ app.put('/api/employees/:id', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error updating employee', error: error.message });
   }
 });
-
-// ** เพิ่ม API สำหรับดึงข้อมูลพนักงานรายบุคคล **
 app.get('/api/employees/:id', checkDbConnection, async (req, res) => {
   try {
     const { id } = req.params;
@@ -217,7 +215,6 @@ app.get('/api/employees/:id', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error fetching single employee', error: error.message });
   }
 });
-
 app.delete('/api/employees/:id', checkDbConnection, async (req, res) => {
   try {
     const { id } = req.params;
@@ -286,6 +283,44 @@ app.post('/api/schedules', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error saving schedule', error: error.message });
   }
 });
+
+// **เพิ่ม API สำหรับ Holidays**
+app.get('/api/holidays', checkDbConnection, async (req, res) => {
+  try {
+    const holidays = await Holiday.find({});
+    res.json(holidays);
+  } catch (error) {
+    console.error('Error fetching holidays:', error);
+    res.status(500).json({ message: 'Error fetching holidays', error: error.message });
+  }
+});
+
+app.post('/api/holidays', checkDbConnection, async (req, res) => {
+  try {
+    const newHoliday = new Holiday(req.body);
+    const savedHoliday = await newHoliday.save();
+    res.status(201).json(savedHoliday);
+  } catch (error) {
+    console.error('Error saving holiday:', error);
+    res.status(500).json({ message: 'Error saving holiday', error: error.message });
+  }
+});
+
+// **เพิ่ม API สำหรับลบวันหยุด**
+app.delete('/api/holidays/:id', checkDbConnection, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedHoliday = await Holiday.findByIdAndDelete(id);
+    if (!deletedHoliday) {
+      return res.status(404).json({ message: 'Holiday not found' });
+    }
+    res.status(200).json({ message: 'Holiday deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting holiday:', error);
+    res.status(500).json({ message: 'Error deleting holiday', error: error.message });
+  }
+});
+
 
 // --- Start Server ---
 app.listen(PORT, () => {
