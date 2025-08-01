@@ -292,7 +292,7 @@ async function saveScheduleToBackend() {
       month,
       year,
       schedule,
-      summary: [] // summary ไม่จำเป็นต้องบันทึก เพราะคำนวณจาก schedule ได้
+      summary: [] // สร้าง summary จากการคำนวณใหม่ หรือส่งเป็น array ว่างไปก่อน
     };
 
     const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules`, {
@@ -302,18 +302,32 @@ async function saveScheduleToBackend() {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to save: ${response.statusText}`);
+      const errorData = await response.json();
+      throw new Error(errorData.message || `Failed to save: ${response.statusText}`);
     }
+
+    const savedSchedule = await response.json();
+    // อัปเดต currentSchedule ให้เป็นข้อมูลใหม่จาก Backend แต่ลบ _id, createdAt ออก
+    const sanitizedSchedule = {
+      month: savedSchedule.month,
+      year: savedSchedule.year,
+      schedule: savedSchedule.schedule,
+      summary: savedSchedule.summary,
+    };
+    // ไม่ต้องอัปเดต localStorage ตรงนี้ เพราะเดี๋ยว loadFullData() จะทำใหม่อยู่แล้ว
 
     btn.innerText = translations[lang].saveSuccess;
   } catch (e) {
     console.error('Error saving schedule:', e);
     btn.innerText = translations[lang].saveFail;
+    alert(`Error saving schedule: ${e.message}`);
   } finally {
     setTimeout(() => {
       btn.innerText = originalText;
       btn.disabled = false;
     }, 2000);
+    // รีโหลดข้อมูลทั้งหมดใหม่เพื่อความปลอดภัย
+    loadFullData();
   }
 }
 
@@ -341,11 +355,15 @@ async function saveScheduleToBackend() {
         const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules/${year}/${month}`);
         if (response.ok) {
           const doc = await response.json();
+          // เก็บเฉพาะส่วน schedule เท่านั้น เพื่อป้องกัน _id และ createdAt
           currentSchedule = doc.schedule;
+          // เก็บข้อมูลที่จำเป็นลง localStorage เพื่อใช้ต่อ
+          localStorage.setItem('currentSchedule', JSON.stringify(doc));
         } else {
           // ถ้าไม่พบข้อมูล (404) ให้ถือว่าเป็นตารางว่าง
           if (response.status === 404) {
             currentSchedule = [];
+            localStorage.removeItem('currentSchedule');
           } else {
             throw new Error(response.statusText);
           }
@@ -353,6 +371,7 @@ async function saveScheduleToBackend() {
       } catch (e) {
         console.error('❌ โหลดตารางล้มเหลว', e);
         currentSchedule = [];
+        localStorage.removeItem('currentSchedule');
       }
 
       // หลังจากโหลดข้อมูลทั้งหมดแล้วจึงวาดหน้าจอใหม่
