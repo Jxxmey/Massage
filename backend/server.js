@@ -176,25 +176,34 @@ app.get('/api/schedules/:year/:month', checkDbConnection, async (req, res) => {
 
 app.post('/api/schedules', checkDbConnection, async (req, res) => {
     try {
-        const { month, year, schedule } = req.body;
+        const { year, month, schedule, summary } = req.body;
+
+        // ตรวจสอบว่ามีข้อมูล year และ month ส่งมาหรือไม่
+        if (year === undefined || month === undefined) {
+            return res.status(400).json({ message: 'Missing year or month in request body' });
+        }
         
-        // Find an existing schedule document by year and month
-        let existingSchedule = await Schedule.findOne({ year: year, month: month });
+        // ค้นหาเอกสารที่มีอยู่
+        const existingSchedule = await Schedule.findOne({ year, month });
 
         if (existingSchedule) {
-            // If exists, update the schedule array. Do NOT touch other fields.
+            // ถ้าพบเอกสารเก่า ให้อัปเดตเฉพาะ field ที่จำเป็น
             existingSchedule.schedule = schedule;
+            existingSchedule.summary = summary; // อัปเดต summary ด้วย
             
             const updatedSchedule = await existingSchedule.save();
             return res.json(updatedSchedule);
         } else {
-            // If not exists, create a new one with a clear payload.
-            const newSchedule = new Schedule({
-                month,
-                year,
-                schedule
-                // summary is not needed in the new payload, it can be an empty array by default if specified in schema
-            });
+            // ถ้าไม่พบ ให้สร้างเอกสารใหม่
+            // สร้าง object ใหม่เพื่อส่งให้ Mongoose โดยตรง
+            const newSchedulePayload = {
+                year: year,
+                month: month,
+                schedule: schedule,
+                summary: summary
+            };
+
+            const newSchedule = new Schedule(newSchedulePayload);
             const savedSchedule = await newSchedule.save();
             res.status(201).json(savedSchedule);
         }
