@@ -4,7 +4,7 @@ const cors = require('cors');
 const app = express();
 
 const PORT = process.env.PORT || 10000;
-const mongoURI = process.env.MONGODB_URI;
+const mongoURI = process.env.MONGO_URI;
 
 // Middleware
 app.use(express.json());
