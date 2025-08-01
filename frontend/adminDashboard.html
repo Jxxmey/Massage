@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>เมนูหลัก</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="./admin-panel.png" type="image/png" />
   <style>
     body {
       margin: 0;
@@ -54,27 +55,51 @@
       color: #333;
       font-weight: 600;
     }
+    header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+    a.back {
+            display: inline-block;
+            margin-bottom: 15px;
+            background: var(--header-bg);
+            color: var(--header-text);
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+      body {
+            font-family: 'Kanit', sans-serif;
+            background: var(--bg-color) url('scheduler-bg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            backdrop-filter: blur(4px) brightness(1.05);
+            background: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+        }
   </style>
 </head>
 <body>
+  <header>
+    <a href="index.html" class="back">← กลับหน้าหลัก</a>
+  </header>
   <div class="grid">
-    <div class="app-icon" onclick="location.href='schedule.html'">
-      <img src="./src/shift.png" alt="schedule" />
-      <div class="app-label">ตารางกะงาน</div>
+    <div class="app-icon" onclick="gotoShift()">
+      <img src="./src/schedule.png" alt="manage" />
+      <div class="app-label">จัดการกะงาน</div>
     </div>
-	    <div class="app-icon" onclick="location.href='Saleview.html'">
-      <img src="./src/sales.png" alt="manage" />
-      <div class="app-label">บันทึกยอดขายรายวัน</div>
-    </div>
-      <div class="app-icon" onclick="gotoShift()">
-      <img src="./src/admin-panel.png" alt="manage" />
-      <div class="app-label">Admin</div>
+	    <div class="app-icon" onclick="location.href='employees.html'">
+      <img src="./src/employee.png" alt="manage" />
+      <div class="app-label">จัดการพนักงาน</div>
     </div>
   </div>
 
   <script>
 function gotoShift() {
-  location.href = 'login.html'; // ← เด้งไป login เสมอ
+  location.href = 'shift-management.html'; // ← เด้งไป login เสมอ
 }
 
   </script>
