@@ -10,10 +10,22 @@ const mongoURI = process.env.MONGODB_URI;
 app.use(express.json());
 app.use(cors());
 
+// ตรวจสอบว่ามี mongoURI ถูกตั้งค่าหรือไม่
+if (!mongoURI) {
+  console.error('❌ MONGODB_URI is not set in environment variables. Please configure it on Render.');
+  process.exit(1); // Exit the process if a critical environment variable is missing
+}
+
 // เชื่อมต่อ MongoDB
-mongoose.connect(mongoURI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ Could not connect to MongoDB:', err));
+// เพิ่ม dbName เข้าไปในตัวเลือก เพื่อระบุ database ที่ต้องการใช้ให้ชัดเจน
+mongoose.connect(mongoURI, { dbName: 'UBMassage' })
+  .then(() => console.log('✅ Connected to MongoDB, using database UBMassage'))
+  .catch(err => {
+    console.error('❌ Could not connect to MongoDB:', err.message);
+    // Exit the application if database connection fails
+    // This is optional, but helps to prevent the server from running without a database connection
+    // process.exit(1); 
+  });
 
 // --- Schemas และ Models ---
 
@@ -36,7 +48,7 @@ const Sale = mongoose.model('Sale', salesSchema);
 
 const employeeSchema = new mongoose.Schema({
   _id: String,
-  Name: String, // แก้ไขให้ตรงกับที่ hard-code ไว้ในเว็บ
+  Name: String,
   Position: String
 }, { collection: 'Employee' });
 const Employee = mongoose.model('Employee', employeeSchema);
@@ -60,9 +72,17 @@ const Schedule = mongoose.model('Schedule', scheduleSchema);
 
 
 // --- API Endpoints ---
+// เพิ่ม Middleware สำหรับตรวจสอบสถานะการเชื่อมต่อฐานข้อมูล
+const checkDbConnection = (req, res, next) => {
+  // 1 = connected
+  if (mongoose.connection.readyState !== 1) { 
+    return res.status(503).json({ message: 'Database connection is not available. Please try again later.' });
+  }
+  next();
+};
 
 // API สำหรับ Sales
-app.get('/api/sales', async (req, res) => {
+app.get('/api/sales', checkDbConnection, async (req, res) => {
   const { startDate, endDate } = req.query;
   const query = {};
   if (startDate && endDate) {
@@ -84,7 +104,7 @@ app.get('/api/sales', async (req, res) => {
 });
 
 // API สำหรับ Employee
-app.get('/api/employees', async (req, res) => {
+app.get('/api/employees', checkDbConnection, async (req, res) => {
   try {
     const employees = await Employee.find({});
     res.json(employees);
@@ -95,7 +115,7 @@ app.get('/api/employees', async (req, res) => {
 });
 
 // API สำหรับ Shift
-app.get('/api/shifts', async (req, res) => {
+app.get('/api/shifts', checkDbConnection, async (req, res) => {
   try {
     const shifts = await Shift.find({}).sort({ order: 1 });
     res.json(shifts);
@@ -105,7 +125,7 @@ app.get('/api/shifts', async (req, res) => {
   }
 });
 
-app.post('/api/shifts', async (req, res) => {
+app.post('/api/shifts', checkDbConnection, async (req, res) => {
   try {
     const newShift = new Shift(req.body);
     const savedShift = await newShift.save();
@@ -116,7 +136,7 @@ app.post('/api/shifts', async (req, res) => {
   }
 });
 
-app.put('/api/shifts/:id', async (req, res) => {
+app.put('/api/shifts/:id', checkDbConnection, async (req, res) => {
   const { id } = req.params;
   try {
     const updatedShift = await Shift.findByIdAndUpdate(id, req.body, { new: true });
@@ -127,7 +147,7 @@ app.put('/api/shifts/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/shifts/:id', async (req, res) => {
+app.delete('/api/shifts/:id', checkDbConnection, async (req, res) => {
   const { id } = req.params;
   try {
     await Shift.findByIdAndDelete(id);
@@ -140,7 +160,7 @@ app.delete('/api/shifts/:id', async (req, res) => {
 
 
 // API สำหรับ Schedules
-app.get('/api/schedules/:year/:month', async (req, res) => {
+app.get('/api/schedules/:year/:month', checkDbConnection, async (req, res) => {
     try {
         const { year, month } = req.params;
         const schedule = await Schedule.findOne({ year: year, month: month });
@@ -154,7 +174,7 @@ app.get('/api/schedules/:year/:month', async (req, res) => {
     }
 });
 
-app.post('/api/schedules', async (req, res) => {
+app.post('/api/schedules', checkDbConnection, async (req, res) => {
     try {
         const { month, year, schedule, summary } = req.body;
         const existingSchedule = await Schedule.findOne({ year: year, month: month });
