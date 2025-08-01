@@ -10,30 +10,20 @@ const mongoURI = process.env.MONGO_URI;
 app.use(express.json());
 app.use(cors());
 
-// ตรวจสอบว่ามี mongoURI ถูกตั้งค่าหรือไม่
+// ตรวจสอบ Mongo URI
 if (!mongoURI) {
   console.error('❌ MONGODB_URI is not set in environment variables. Please configure it on Render.');
-  process.exit(1); // Exit the process if a critical environment variable is missing
+  process.exit(1);
 }
 
 // เชื่อมต่อ MongoDB
-// เพิ่ม dbName เข้าไปในตัวเลือก เพื่อระบุ database ที่ต้องการใช้ให้ชัดเจน
 mongoose.connect(mongoURI, { dbName: 'UBMassage' })
   .then(() => console.log('✅ Connected to MongoDB, using database UBMassage'))
-  .catch(err => {
-    console.error('❌ Could not connect to MongoDB:', err.message);
-    // Exit the application if database connection fails
-    // This is optional, but helps to prevent the server from running without a database connection
-    // process.exit(1); 
-  });
+  .catch(err => console.error('❌ Could not connect to MongoDB:', err.message));
 
-// --- Schemas และ Models ---
-
+// --- Schemas ---
 const salesSchema = new mongoose.Schema({
-  date: {
-    _seconds: Number,
-    _nanoseconds: Number
-  },
+  date: Date, // ใช้ Date ตรงๆ แทน object _seconds/_nanoseconds
   staffOil: Number,
   customers: Number,
   income: Number,
@@ -47,9 +37,8 @@ const salesSchema = new mongoose.Schema({
 const Sale = mongoose.model('Sale', salesSchema);
 
 const employeeSchema = new mongoose.Schema({
-  _id: String,
-  Name: String,
-  Position: String
+  name: String,
+  position: String
 }, { collection: 'Employee' });
 const Employee = mongoose.model('Employee', employeeSchema);
 
@@ -68,33 +57,26 @@ const scheduleSchema = new mongoose.Schema({
   summary: Array,
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'schedules' });
+
+scheduleSchema.index({ year: 1, month: 1 }, { unique: true }); // ป้องกันซ้ำ
 const Schedule = mongoose.model('Schedule', scheduleSchema);
 
-
-// --- API Endpoints ---
-// เพิ่ม Middleware สำหรับตรวจสอบสถานะการเชื่อมต่อฐานข้อมูล
+// --- Middleware ตรวจสอบ DB ---
 const checkDbConnection = (req, res, next) => {
-  // 1 = connected
-  if (mongoose.connection.readyState !== 1) { 
+  if (mongoose.connection.readyState !== 1) {
     return res.status(503).json({ message: 'Database connection is not available. Please try again later.' });
   }
   next();
 };
 
-// API สำหรับ Sales
+// --- API Sales ---
 app.get('/api/sales', checkDbConnection, async (req, res) => {
-  const { startDate, endDate } = req.query;
-  const query = {};
-  if (startDate && endDate) {
-    try {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        query.date = { $gte: start, $lte: end };
-    } catch (e) {
-      return res.status(400).json({ message: 'Invalid date format' });
-    }
-  }
   try {
+    const { startDate, endDate } = req.query;
+    const query = {};
+    if (startDate && endDate) {
+      query.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    }
     const sales = await Sale.find(query).sort({ date: 1 });
     res.json(sales);
   } catch (error) {
@@ -103,7 +85,7 @@ app.get('/api/sales', checkDbConnection, async (req, res) => {
   }
 });
 
-// API สำหรับ Employee
+// --- API Employees ---
 app.get('/api/employees', checkDbConnection, async (req, res) => {
   try {
     const employees = await Employee.find({});
@@ -114,7 +96,7 @@ app.get('/api/employees', checkDbConnection, async (req, res) => {
   }
 });
 
-// API สำหรับ Shift
+// --- API Shifts ---
 app.get('/api/shifts', checkDbConnection, async (req, res) => {
   try {
     const shifts = await Shift.find({}).sort({ order: 1 });
@@ -136,84 +118,43 @@ app.post('/api/shifts', checkDbConnection, async (req, res) => {
   }
 });
 
-app.put('/api/shifts/:id', checkDbConnection, async (req, res) => {
-  const { id } = req.params;
-  try {
-    const updatedShift = await Shift.findByIdAndUpdate(id, req.body, { new: true });
-    res.json(updatedShift);
-  } catch (error) {
-    console.error('Error updating shift:', error);
-    res.status(500).json({ message: 'Error updating shift', error: error.message });
-  }
-});
-
-app.delete('/api/shifts/:id', checkDbConnection, async (req, res) => {
-  const { id } = req.params;
-  try {
-    await Shift.findByIdAndDelete(id);
-    res.status(204).end();
-  } catch (error) {
-    console.error('Error deleting shift:', error);
-    res.status(500).json({ message: 'Error deleting shift', error: error.message });
-  }
-});
-
-
-// API สำหรับ Schedules
+// --- API Schedules ---
 app.get('/api/schedules/:year/:month', checkDbConnection, async (req, res) => {
-    try {
-        const { year, month } = req.params;
-        const schedule = await Schedule.findOne({ year: year, month: month });
-        if (!schedule) {
-            return res.status(404).json({ message: 'Schedule not found' });
-        }
-        res.json(schedule);
-    } catch (error) {
-        console.error('Error fetching schedule:', error);
-        res.status(500).json({ message: 'Error fetching schedule', error: error.message });
-    }
+  try {
+    const { year, month } = req.params;
+    const schedule = await Schedule.findOne({ year: parseInt(year), month: parseInt(month) });
+    if (!schedule) return res.status(404).json({ message: 'Schedule not found' });
+    res.json(schedule);
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+    res.status(500).json({ message: 'Error fetching schedule', error: error.message });
+  }
 });
 
 app.post('/api/schedules', checkDbConnection, async (req, res) => {
-    try {
-        const { year, month, schedule, summary } = req.body;
-
-        // ตรวจสอบว่ามีข้อมูล year และ month ส่งมาหรือไม่
-        if (year === undefined || month === undefined) {
-            return res.status(400).json({ message: 'Missing year or month in request body' });
-        }
-        
-        // ค้นหาเอกสารที่มีอยู่
-        const existingSchedule = await Schedule.findOne({ year, month });
-
-        if (existingSchedule) {
-            // ถ้าพบเอกสารเก่า ให้อัปเดตเฉพาะ field ที่จำเป็น
-            existingSchedule.schedule = schedule;
-            existingSchedule.summary = summary; // อัปเดต summary ด้วย
-            
-            const updatedSchedule = await existingSchedule.save();
-            return res.json(updatedSchedule);
-        } else {
-            // ถ้าไม่พบ ให้สร้างเอกสารใหม่
-            // สร้าง object ใหม่เพื่อส่งให้ Mongoose โดยตรง
-            const newSchedulePayload = {
-                year: year,
-                month: month,
-                schedule: schedule,
-                summary: summary
-            };
-
-            const newSchedule = new Schedule(newSchedulePayload);
-            const savedSchedule = await newSchedule.save();
-            res.status(201).json(savedSchedule);
-        }
-    } catch (error) {
-        console.error('Error saving schedule:', error);
-        res.status(500).json({ message: 'Error saving schedule', error: error.message });
+  try {
+    const { year, month, schedule, summary } = req.body;
+    if (year === undefined || month === undefined) {
+      return res.status(400).json({ message: 'Missing year or month in request body' });
     }
+
+    // ลบ createdAt ที่มาจาก frontend
+    if (req.body.createdAt) delete req.body.createdAt;
+
+    const updated = await Schedule.findOneAndUpdate(
+      { year, month },
+      { schedule, summary },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json(updated);
+  } catch (error) {
+    console.error('Error saving schedule:', error);
+    res.status(500).json({ message: 'Error saving schedule', error: error.message });
+  }
 });
 
-// --- เริ่ม Server ---
+// --- Start Server ---
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
