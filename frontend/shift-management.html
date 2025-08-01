@@ -263,73 +263,67 @@ function prepareForBackend(sel) {
     function exportPDF(){ html2canvas(pageWrapper,{scale:2}).then(canvas=>{ const{jsPDF}=window.jspdf; const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'}); const pw=pdf.internal.pageSize.getWidth(); const ih=(canvas.height*pw)/canvas.width; let pos=0,left=ih-pdf.internal.pageSize.getHeight(); const img=canvas.toDataURL('image/png'); pdf.addImage(img,'PNG',0,pos,pw,ih); while(left>0){ pos-=pdf.internal.pageSize.getHeight(); pdf.addImage(img,'PNG',0,pos,pw,ih); left-=pdf.internal.pageSize.getHeight(); } pdf.save('schedule.pdf'); }); }
 
     // SAVE to Backend
-async function saveScheduleToBackend() {
-  const btn = document.getElementById('save-cloud');
-  btn.disabled = true;
-  const originalText = btn.innerText;
-  btn.innerText = translations[lang].saving;
-  const { month, year } = currentMY();
+    async function saveScheduleToBackend() {
+        const btn = document.getElementById('save-cloud');
+        btn.disabled = true;
+        const originalText = btn.innerText;
+        btn.innerText = translations[lang].saving;
+        const { month, year } = currentMY();
 
-  try {
-    const daysInMonth = new Date(year, month, 0).getDate();
-    const schedule = [];
-    const tableRows = document.querySelectorAll('#table-container table tbody tr');
+        try {
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const schedule = [];
+            const summary = []; // สร้าง summary array ที่ว่างเปล่า
 
-    // Skip the first row which is for holidays
-    for (let i = 1; i < tableRows.length; i++) {
-      const row = tableRows[i];
-      const employeeName = row.cells[0].innerText;
-      const employeeData = { c0: employeeName };
+            const tableRows = document.querySelectorAll('#table-container table tbody tr');
 
-      for (let d = 1; d <= daysInMonth; d++) {
-        const selectElement = row.cells[d].querySelector('select');
-        employeeData[`c${d}`] = selectElement ? selectElement.value : '';
-      }
-      schedule.push(employeeData);
+            // ข้ามแถวแรกที่เป็นวันหยุดพิเศษ
+            for (let i = 1; i < tableRows.length; i++) {
+                const row = tableRows[i];
+                const employeeName = row.cells[0].innerText;
+                const employeeData = { c0: employeeName };
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const selectElement = row.cells[d].querySelector('select');
+                    employeeData[`c${d}`] = selectElement ? selectElement.value : '';
+                }
+                schedule.push(employeeData);
+            }
+
+            // สร้าง Payload ใหม่แบบสะอาด
+            const payload = {
+                year: year,
+                month: month,
+                schedule: schedule,
+                summary: summary
+            };
+
+            const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Failed to save: ${response.statusText}`);
+            }
+
+            btn.innerText = translations[lang].saveSuccess;
+        } catch (e) {
+            console.error('Error saving schedule:', e);
+            btn.innerText = translations[lang].saveFail;
+            alert(`Error saving schedule: ${e.message}`);
+        } finally {
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }, 2000);
+            // โหลดข้อมูลใหม่ทั้งหมดเพื่อยืนยันการเปลี่ยนแปลง
+            loadFullData();
+        }
     }
 
-    const payload = {
-      month,
-      year,
-      schedule,
-      summary: [] // สร้าง summary จากการคำนวณใหม่ หรือส่งเป็น array ว่างไปก่อน
-    };
-
-    const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `Failed to save: ${response.statusText}`);
-    }
-
-    const savedSchedule = await response.json();
-    // อัปเดต currentSchedule ให้เป็นข้อมูลใหม่จาก Backend แต่ลบ _id, createdAt ออก
-    const sanitizedSchedule = {
-      month: savedSchedule.month,
-      year: savedSchedule.year,
-      schedule: savedSchedule.schedule,
-      summary: savedSchedule.summary,
-    };
-    // ไม่ต้องอัปเดต localStorage ตรงนี้ เพราะเดี๋ยว loadFullData() จะทำใหม่อยู่แล้ว
-
-    btn.innerText = translations[lang].saveSuccess;
-  } catch (e) {
-    console.error('Error saving schedule:', e);
-    btn.innerText = translations[lang].saveFail;
-    alert(`Error saving schedule: ${e.message}`);
-  } finally {
-    setTimeout(() => {
-      btn.innerText = originalText;
-      btn.disabled = false;
-    }, 2000);
-    // รีโหลดข้อมูลทั้งหมดใหม่เพื่อความปลอดภัย
-    loadFullData();
-  }
-}
 
     // LOAD from Backend
     async function loadFullData() {
