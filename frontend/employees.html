@@ -5,37 +5,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>จัดการพนักงาน</title>
     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1000/1000078.png" type="image/png" />
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Employee Table Styles */
-        .employee-table {
-            width: 100%;
-            max-width: 800px;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        :root {
+            --primary-color: #3498db; /* ฟ้า */
+            --primary-light-color: #5dace2;
+            --secondary-color: #2c3e50; /* เทาเข้ม */
+            --background-color: #ecf0f1; /* เทาอ่อนมาก */
+            --card-bg-color: #ffffff; /* ขาว */
+            --text-color: #34495e; /* เทาเข้ม */
+            --border-color: #e0e6e9; /* เส้นขอบ */
+            --danger-color: #e74c3c; /* แดง */
+            --success-color: #2ecc71; /* เขียว */
+            --hover-color: #f6f8f9;
         }
-        .employee-table th, .employee-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid var(--cell-border);
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--background-color);
             color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
         }
-        .employee-table thead th {
-            background-color: var(--table-header-bg);
-            color: var(--header-text);
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+            text-decoration: none;
             font-weight: 600;
         }
-        .employee-table tbody tr:nth-child(even) {
-            background-color: var(--table-alt-row-bg);
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-light-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Table Styles */
+        .employee-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .employee-table thead {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .employee-table th, .employee-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
         }
         .employee-table tbody tr:hover {
-            background-color: var(--hover-bg);
+            background-color: var(--hover-color);
         }
         .employee-table td:last-child {
+            text-align: center;
+            width: 150px;
+        }
+        .employee-table th:last-child {
             text-align: center;
         }
         .no-employee-message {
@@ -44,123 +133,86 @@
             padding: 20px;
         }
 
-        /* General Styles (from previous version) */
-        .employee-actions button {
-            margin: 0 2px;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            border: none;
-            transition: background 0.2s;
-        }
-        .edit-btn {
-            background: var(--button-bg);
-            color: var(--header-text);
-        }
-        .edit-btn:hover {
-            background: var(--button-bg-hover);
-        }
-        .delete-btn {
-            background: #e74c3c;
-            color: white;
-        }
-        .delete-btn:hover {
-            background: #c0392b;
-        }
-        .toolbar {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .toolbar button {
-            background: var(--button-bg);
-            color: var(--header-text);
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .toolbar button:hover {
-            background: var(--button-bg-hover);
-        }
-        
-        /* Modal Styles (from previous version) */
+        /* Modal Popup Styles */
         .popup {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(44, 62, 80, 0.7);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
         .popup-content {
-            background: var(--main-bg);
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background-color: var(--card-bg-color);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             width: 90%;
-            max-width: 400px;
+            max-width: 450px;
             position: relative;
+            transform: scale(0.9);
+            animation: fadeIn 0.3s forwards;
+        }
+        @keyframes fadeIn {
+            to { transform: scale(1); opacity: 1; }
         }
         .popup-content h2 {
             margin-top: 0;
             text-align: center;
+            color: var(--primary-color);
         }
         .popup-content form {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
         .popup-content form label {
-            display: flex;
-            flex-direction: column;
             font-weight: 600;
             color: var(--text-color);
         }
         .popup-content form input {
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid var(--cell-border);
-            border-radius: 4px;
-            background: var(--input-bg);
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--background-color);
             color: var(--text-color);
+            transition: border-color 0.3s;
         }
-        .popup-content form button {
-            padding: 10px;
-            border-radius: 4px;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-weight: 600;
+        .popup-content form input:focus {
+            outline: none;
+            border-color: var(--primary-color);
         }
-        .popup-content form button[type="submit"] {
-            background: var(--button-bg);
-            margin-top: 15px;
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 1.5rem;
         }
-        .popup-content form button[type="submit"]:hover {
-            background: var(--button-bg-hover);
-        }
-        .popup-content form button.cancel-btn {
-            background: #95a5a6;
-        }
-        .popup-content form button.cancel-btn:hover {
-            background: #7f8c8d;
+        .form-actions .btn {
+            flex-grow: 1;
         }
         .hidden {
             display: none;
         }
+        .disabled-button {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
-    <a href="index.html" class="back">← กลับหน้าหลัก</a>
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> กลับหน้าหลัก</a>
     <div class="container">
-        <h1>👥 จัดการรายชื่อพนักงาน</h1>
+        <h1><i class="fas fa-users"></i> จัดการรายชื่อพนักงาน</h1>
         <div class="toolbar">
-            <button onclick="openAddPopup()">➕ เพิ่มพนักงาน</button>
+            <button class="btn btn-primary" onclick="openAddPopup()"><i class="fas fa-plus"></i> เพิ่มพนักงาน</button>
         </div>
         <table class="employee-table">
             <thead>
@@ -181,8 +233,10 @@
                 <input type="hidden" id="employee-id">
                 <label>ชื่อพนักงาน: <input type="text" id="employee-name" name="Name" required></label>
                 <label>ตำแหน่ง: <input type="text" id="employee-position" name="Position"></label>
-                <button type="submit" id="submit-btn">💾 บันทึก</button>
-                <button type="button" class="cancel-btn" onclick="closePopup()">❌ ยกเลิก</button>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closePopup()"><i class="fas fa-times"></i> ยกเลิก</button>
+                    <button type="submit" id="submit-btn" class="btn btn-primary"><i class="fas fa-save"></i> บันทึก</button>
+                </div>
             </form>
         </div>
     </div>
@@ -240,8 +294,8 @@
                     <td>${employee.Position}</td>
                     <td>
                         <div class="employee-actions">
-                            <button class="edit-btn" onclick="editEmployee('${employee._id}')">✏️ แก้ไข</button>
-                            <button class="delete-btn" onclick="deleteEmployee('${employee._id}')">❌ ลบ</button>
+                            <button class="btn btn-primary" onclick="editEmployee('${employee._id}')"><i class="fas fa-edit"></i> แก้ไข</button>
+                            <button class="btn btn-danger" onclick="deleteEmployee('${employee._id}')"><i class="fas fa-trash-alt"></i> ลบ</button>
                         </div>
                     </td>
                 `;
@@ -295,14 +349,12 @@
             try {
                 let response;
                 if (id) {
-                    // แก้ไข
                     response = await fetch(`${RENDER_BACKEND_URL}/api/employees/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ Name: name, Position: position })
                     });
                 } else {
-                    // เพิ่มใหม่
                     response = await fetch(`${RENDER_BACKEND_URL}/api/employees`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
