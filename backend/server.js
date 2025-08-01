@@ -42,11 +42,8 @@ const salesSchema = new mongoose.Schema({
 }, { collection: 'sales' });
 const Sale = mongoose.model('Sale', salesSchema);
 
-// ** แก้ไข Schema ของ Employee **
 const employeeSchema = new mongoose.Schema({
-  // กำหนด _id เป็น String
   _id: { type: String, required: true },
-  // กำหนด Name และ Position ให้ตรงกับรูปแบบข้อมูลใหม่
   Name: { type: String, required: true },
   Position: { type: String, default: "พนักงาน" }
 }, { collection: 'Employee' });
@@ -68,7 +65,7 @@ const scheduleSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { collection: 'schedules' });
 
-scheduleSchema.index({ year: 1, month: 1 }, { unique: true }); // ป้องกันซ้ำ
+scheduleSchema.index({ year: 1, month: 1 }, { unique: true });
 const Schedule = mongoose.model('Schedule', scheduleSchema);
 
 // --- Middleware ตรวจสอบ DB ---
@@ -96,7 +93,6 @@ app.get('/api/sales', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error fetching sales', error: error.message });
   }
 });
-
 app.post('/api/sales', checkDbConnection, async (req, res) => {
   try {
     const newSale = new Sale(req.body);
@@ -107,7 +103,6 @@ app.post('/api/sales', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error saving sale', error: error.message });
   }
 });
-
 app.put('/api/sales/:id', checkDbConnection, async (req, res) => {
   try {
     const { id } = req.params;
@@ -121,7 +116,6 @@ app.put('/api/sales/:id', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error updating sale', error: error.message });
   }
 });
-
 app.get('/api/sales/:id', checkDbConnection, async (req, res) => {
   try {
     const { id } = req.params;
@@ -135,7 +129,6 @@ app.get('/api/sales/:id', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error fetching single sale', error: error.message });
   }
 });
-
 app.delete('/api/sales/:id', checkDbConnection, async (req, res) => {
   try {
     const { id } = req.params;
@@ -153,7 +146,6 @@ app.delete('/api/sales/:id', checkDbConnection, async (req, res) => {
 // --- API Employees (แก้ไข) ---
 app.get('/api/employees', checkDbConnection, async (req, res) => {
   try {
-    // ดึงข้อมูลพนักงานทั้งหมด
     const employees = await Employee.find({});
     res.json(employees);
   } catch (error) {
@@ -164,11 +156,15 @@ app.get('/api/employees', checkDbConnection, async (req, res) => {
 
 app.post('/api/employees', checkDbConnection, async (req, res) => {
   try {
+    const { Name, Position } = req.body;
+    if (!Name) {
+      return res.status(400).json({ message: 'Employee Name is required.' });
+    }
     // สร้าง _id จาก Name
     const newEmployee = new Employee({
-      _id: req.body.Name, 
-      Name: req.body.Name,
-      Position: req.body.Position || 'พนักงาน' 
+      _id: Name,
+      Name: Name,
+      Position: Position || 'พนักงาน'
     });
     const savedEmployee = await newEmployee.save();
     res.status(201).json(savedEmployee);
@@ -178,11 +174,54 @@ app.post('/api/employees', checkDbConnection, async (req, res) => {
   }
 });
 
+// ** เพิ่ม API สำหรับแก้ไขข้อมูลพนักงาน **
+app.put('/api/employees/:id', checkDbConnection, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { Name, Position } = req.body;
+    
+    // ถ้ามีการแก้ไขชื่อ ต้องลบอันเก่าและสร้างอันใหม่
+    if (id !== Name) {
+      const oldEmployee = await Employee.findById(id);
+      if (oldEmployee) {
+        await Employee.findByIdAndDelete(id);
+      }
+      const newEmployee = new Employee({ _id: Name, Name, Position });
+      const savedEmployee = await newEmployee.save();
+      return res.json(savedEmployee);
+    }
+
+    // ถ้าแก้ไขแค่ Position
+    const updatedEmployee = await Employee.findByIdAndUpdate(id, { Name, Position }, { new: true, runValidators: true });
+    if (!updatedEmployee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    res.json(updatedEmployee);
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    res.status(500).json({ message: 'Error updating employee', error: error.message });
+  }
+});
+
+// ** เพิ่ม API สำหรับดึงข้อมูลพนักงานรายบุคคล **
+app.get('/api/employees/:id', checkDbConnection, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const employee = await Employee.findById(id);
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    res.json(employee);
+  } catch (error) {
+    console.error('Error fetching single employee:', error);
+    res.status(500).json({ message: 'Error fetching single employee', error: error.message });
+  }
+});
+
 app.delete('/api/employees/:id', checkDbConnection, async (req, res) => {
   try {
     const { id } = req.params;
-    // ใช้ findByIdAndDelete ด้วย id ที่เป็น String ได้เลย
-    const deletedEmployee = await Employee.findByIdAndDelete(id); 
+    const deletedEmployee = await Employee.findByIdAndDelete(id);
     if (!deletedEmployee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
@@ -203,7 +242,6 @@ app.get('/api/shifts', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error fetching shifts', error: error.message });
   }
 });
-
 app.post('/api/shifts', checkDbConnection, async (req, res) => {
   try {
     const newShift = new Shift(req.body);
@@ -227,7 +265,6 @@ app.get('/api/schedules/:year/:month', checkDbConnection, async (req, res) => {
     res.status(500).json({ message: 'Error fetching schedule', error: error.message });
   }
 });
-
 app.post('/api/schedules', checkDbConnection, async (req, res) => {
   try {
     const { year, month, schedule, summary } = req.body;
@@ -235,7 +272,6 @@ app.post('/api/schedules', checkDbConnection, async (req, res) => {
       return res.status(400).json({ message: 'Missing year or month in request body' });
     }
 
-    // ลบ createdAt ที่มาจาก frontend
     if (req.body.createdAt) delete req.body.createdAt;
 
     const updated = await Schedule.findOneAndUpdate(

@@ -24,22 +24,44 @@
             align-items: center;
             padding: 10px 15px;
             border-bottom: 1px solid var(--cell-border);
+            transition: background 0.2s;
+        }
+        .employee-item:hover {
+            background: var(--hover-bg);
         }
         .employee-item:last-child {
             border-bottom: none;
+        }
+        .employee-info {
+            display: flex;
+            flex-direction: column;
         }
         .employee-name {
             font-size: 1.1em;
             color: var(--text-color);
         }
-        .delete-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
+        .employee-position {
+            font-size: 0.9em;
+            color: #888;
+        }
+        .employee-actions button {
+            margin-left: 5px;
             padding: 5px 10px;
             border-radius: 4px;
             cursor: pointer;
+            border: none;
             transition: background 0.2s;
+        }
+        .edit-btn {
+            background: var(--button-bg);
+            color: var(--header-text);
+        }
+        .edit-btn:hover {
+            background: var(--button-bg-hover);
+        }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
         }
         .delete-btn:hover {
             background: #c0392b;
@@ -65,30 +87,131 @@
         #add-employee-btn:hover {
             background: var(--button-bg-hover);
         }
+        
+        /* Modal Styles */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .popup-content {
+            background: var(--main-bg);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 400px;
+            position: relative;
+        }
+        .popup-content h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .popup-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .popup-content form label {
+            display: flex;
+            flex-direction: column;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .popup-content form input {
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid var(--cell-border);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+        .popup-content form button {
+            padding: 10px;
+            border-radius: 4px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .popup-content form button[type="submit"] {
+            background: var(--button-bg);
+            margin-top: 15px;
+        }
+        .popup-content form button[type="submit"]:hover {
+            background: var(--button-bg-hover);
+        }
+        .popup-content form button.cancel-btn {
+            background: #95a5a6;
+        }
+        .popup-content form button.cancel-btn:hover {
+            background: #7f8c8d;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <a href="index.html" class="back">← กลับหน้าหลัก</a>
     <div class="container">
         <h1>👥 จัดการรายชื่อพนักงาน</h1>
-
+        <div class="toolbar">
+            <button onclick="openAddPopup()">➕ เพิ่มพนักงาน</button>
+        </div>
         <ul class="employee-list" id="employee-list"></ul>
-        
-        <form id="add-employee-form">
-            <input type="text" id="new-employee-name" placeholder="เพิ่มชื่อพนักงาน" required>
-            <button type="submit" id="add-employee-btn">เพิ่ม</button>
-        </form>
+    </div>
+
+        <div id="popup" class="popup hidden">
+        <div class="popup-content">
+            <h2 id="popup-title">เพิ่มพนักงานใหม่</h2>
+            <form id="employee-form">
+                <input type="hidden" id="employee-id">
+                <label>ชื่อพนักงาน: <input type="text" id="employee-name" name="Name" required></label>
+                <label>ตำแหน่ง: <input type="text" id="employee-position" name="Position"></label>
+                <button type="submit" id="submit-btn">💾 บันทึก</button>
+                <button type="button" class="cancel-btn" onclick="closePopup()">❌ ยกเลิก</button>
+            </form>
+        </div>
     </div>
 
     <script>
-        // ** เปลี่ยน URL ตรงนี้ให้เป็น URL ของ Backend ที่คุณ Deploy บน Render **
         const RENDER_BACKEND_URL = 'https://ub-backend.onrender.com';
-
         const employeeList = document.getElementById('employee-list');
-        const newEmployeeNameInput = document.getElementById('new-employee-name');
-        const addEmployeeForm = document.getElementById('add-employee-form');
-        
+        const popup = document.getElementById('popup');
+        const popupTitle = document.getElementById('popup-title');
+        const employeeForm = document.getElementById('employee-form');
+        const employeeIdInput = document.getElementById('employee-id');
+        const employeeNameInput = document.getElementById('employee-name');
+        const employeePositionInput = document.getElementById('employee-position');
+        const submitBtn = document.getElementById('submit-btn');
+
+        function openPopup() {
+            popup.classList.remove('hidden');
+        }
+
+        function closePopup() {
+            popup.classList.add('hidden');
+            employeeForm.reset();
+            employeeIdInput.value = '';
+            popupTitle.innerText = 'เพิ่มพนักงานใหม่';
+        }
+
+        function openAddPopup() {
+            closePopup(); // Reset form just in case
+            popupTitle.innerText = 'เพิ่มพนักงานใหม่';
+            openPopup();
+        }
+
         async function loadEmployees() {
+            employeeList.innerHTML = '<li>กำลังโหลด...</li>';
             try {
                 const response = await fetch(`${RENDER_BACKEND_URL}/api/employees`);
                 const employees = await response.json();
@@ -104,29 +227,33 @@
             employees.forEach(employee => {
                 const li = document.createElement('li');
                 li.className = 'employee-item';
-                // ใช้ employee._id ที่เป็น String
-                li.dataset.id = employee._id; 
                 li.innerHTML = `
-                    <span class="employee-name">${employee.Name}</span>
-                    <button class="delete-btn" onclick="deleteEmployee('${employee._id}')">ลบ</button>
+                    <div class="employee-info">
+                        <span class="employee-name">${employee.Name}</span>
+                        <span class="employee-position">${employee.Position}</span>
+                    </div>
+                    <div class="employee-actions">
+                        <button class="edit-btn" onclick="editEmployee('${employee._id}')">✏️ แก้ไข</button>
+                        <button class="delete-btn" onclick="deleteEmployee('${employee._id}')">❌ ลบ</button>
+                    </div>
                 `;
                 employeeList.appendChild(li);
             });
         }
 
-        async function addEmployee(name) {
+        async function editEmployee(id) {
             try {
-                const response = await fetch(`${RENDER_BACKEND_URL}/api/employees`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    // ส่งข้อมูลเป็น Name
-                    body: JSON.stringify({ Name: name, Position: 'พนักงาน' }) 
-                });
-                if (!response.ok) throw new Error('Failed to add employee');
-                newEmployeeNameInput.value = '';
-                loadEmployees();
+                const response = await fetch(`${RENDER_BACKEND_URL}/api/employees/${id}`);
+                if (!response.ok) throw new Error('Employee not found');
+                const employee = await response.json();
+
+                popupTitle.innerText = 'แก้ไขข้อมูลพนักงาน';
+                employeeIdInput.value = employee._id;
+                employeeNameInput.value = employee.Name;
+                employeePositionInput.value = employee.Position;
+                openPopup();
             } catch (e) {
-                alert('เพิ่มพนักงานไม่สำเร็จ: ' + e.message);
+                alert('ไม่สามารถดึงข้อมูลพนักงานเพื่อแก้ไขได้: ' + e.message);
             }
         }
 
@@ -143,16 +270,54 @@
             }
         }
 
-        addEmployeeForm.addEventListener('submit', (e) => {
+        employeeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = newEmployeeNameInput.value.trim();
-            if (name) {
-                addEmployee(name);
+            submitBtn.disabled = true;
+
+            const id = employeeIdInput.value;
+            const name = employeeNameInput.value.trim();
+            const position = employeePositionInput.value.trim() || 'พนักงาน';
+
+            if (!name) {
+                alert("กรุณากรอกชื่อพนักงาน");
+                submitBtn.disabled = false;
+                return;
+            }
+
+            try {
+                let response;
+                if (id) {
+                    // แก้ไข
+                    response = await fetch(`${RENDER_BACKEND_URL}/api/employees/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ Name: name, Position: position })
+                    });
+                } else {
+                    // เพิ่มใหม่
+                    response = await fetch(`${RENDER_BACKEND_URL}/api/employees`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ Name: name, Position: position })
+                    });
+                }
+
+                if (!response.ok) throw new Error('Failed to save employee');
+                
+                closePopup();
+                loadEmployees();
+            } catch (e) {
+                alert('บันทึกข้อมูลพนักงานไม่สำเร็จ: ' + e.message);
+            } finally {
+                submitBtn.disabled = false;
             }
         });
 
         window.onload = loadEmployees;
         window.deleteEmployee = deleteEmployee;
+        window.editEmployee = editEmployee;
+        window.openAddPopup = openAddPopup;
+        window.closePopup = closePopup;
     </script>
 </body>
 </html>
