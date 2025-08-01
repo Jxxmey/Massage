@@ -208,3 +208,50 @@ tr.selected {
 .selected {
   background-color: #cce5ff;
 }
+
+.summary-container {
+    margin-top: 30px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px var(--card-shadow);
+    padding: 20px;
+}
+
+.summary-container h3 {
+    text-align: center;
+    color: var(--text-color);
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.summary-table th, .summary-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid var(--cell-border);
+}
+
+.summary-table th {
+    background-color: var(--table-header-bg);
+    color: var(--text-color);
+    font-weight: bold;
+}
+
+.summary-table td {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+}
+
+}
+
+/* --- ปรับปรุงสไตล์ตารางหลักเล็กน้อยเพื่อความเข้ากัน --- */
+.sales-table {
+    box-shadow: 0 4px 8px var(--card-shadow);
+}

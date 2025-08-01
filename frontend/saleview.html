@@ -6,7 +6,6 @@
  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3588/3588658.png" type="image/png" />
  <link rel="stylesheet" href="style.css">
  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
- 
  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -14,37 +13,94 @@
 <body>
  <h1>📊 ระบบบันทึกยอดขายรายวัน</h1>
  <a href="index.html" class="back">← กลับหน้าหลัก</a>
-  <div class="toolbar">
-  <button onclick="openPopup()">➕ Add</button>
-  <button id="edit-btn" disabled>✏️ Edit</button>
-  <button id="delete-btn" disabled onclick="deleteEntry()">❌ Cancel</button>
+ 
+ <div class="toolbar">
+  <button onclick="openPopup()">➕ เพิ่ม</button>
+  <button id="edit-btn" disabled>✏️ แก้ไข</button>
+  <button id="delete-btn" disabled onclick="deleteEntry()">❌ ลบ</button>
   <button id="export-pdf">ส่งออก PDF</button>
   <button id="export-excel">ส่งออก Excel</button>
- <button id="theme-toggle">🌙</button></div>
-<div>
-  <label>จาก <input type="date" id="startDate" onchange="loadSales()"></label>
-  <label>ถึง <input type="date" id="endDate" onchange="loadSales()"></label>
+  <button id="theme-toggle">🌙</button>
  </div>
-  <div id="sales-list"></div>
 
-  <div id="popup" class="popup hidden">
+ <div class="date-range">
+  <label>ปี: <input type="number" id="year" value="2025" min="2000"></label>
+  <label>จากเดือน: <select id="startMonth"></select></label>
+  <label>ถึงเดือน: <select id="endMonth"></select></label>
+  <button id="load-data-btn">โหลดข้อมูล</button>
+ </div>
+
+ <div id="sales-list">
+   <table class="sales-table">
+     <thead>
+       <tr>
+         <th>📅 วันที่</th>
+         <th>🧴 Staff Oil</th>
+         <th>👥 ลูกค้า</th>
+         <th>💰 รายรับ</th>
+         <th>📈 ค่ามือ</th>
+         <th>💹 ค่ามือพิเศษ</th>
+         <th>💸 รายจ่าย</th>
+         <th>💳 บัตรเครดิต</th>
+         <th>💵 เงินสด</th>
+         <th>📈 ยอดสุทธิ</th>
+         <th>⏱️ เวลาทำงาน</th>
+       </tr>
+     </thead>
+     <tbody id="sales-table-body">
+            </tbody>
+   </table>
+ </div>
+
+<div class="summary-container" id="sales-summary">
+    <h3>สรุปยอดรวม</h3>
+    <table class="summary-table">
+        <tbody>
+            <tr>
+                <th>ยอดรวมลูกค้า</th>
+                <td id="summary-customers">0 คน</td>
+            </tr>
+            <tr>
+                <th>ยอดรวมรายรับทั้งหมด</th>
+                <td id="summary-income">0.00</td>
+            </tr>
+            <tr>
+                <th>ยอดรวมรายจ่ายทั้งหมด</th>
+                <td id="summary-expense">0.00</td>
+            </tr>
+            <tr>
+                <th>ยอดรวมสุทธิ</th>
+                <td id="summary-net-income">0.00</td>
+            </tr>
+            <tr>
+                <th>ยอดรวมบัตรเครดิตทั้งหมด</th>
+                <td id="summary-credit-card">0.00</td>
+            </tr>
+            <tr>
+                <th>ยอดรวมเงินสดทั้งหมด</th>
+                <td id="summary-cash">0.00</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+ <div id="popup" class="popup hidden">
   <div class="popup-content">
   <h2>เพิ่มรายการยอดขาย</h2>
   <form id="add-form">
    <label>📅 วันที่ <input type="date" name="date" required></label>
    <label>🧴 Staff Oil (บาท) <input type="number" name="staffOil" step="0.01"></label>
    <label>👥 Customers (คน) <input type="number" name="customers"></label>
-   <label>💰 Total income (บาท) <input type="number" name="income" step="0.01"></label>
+   <label>💰 Total income (บาท) <input type="number" name="income" step="0.01" oninput="updateTotalPreview()"></label>
    <label>📈 Commission <input type="number" name="commission" step="0.01"></label>
    <label>💹 Extra Commission <input type="number" name="extraCommission" step="0.01"></label>
-   <label>💸 Expense <input type="number" name="expense" step="0.01"></label>
+   <label>💸 Expense <input type="number" name="expense" step="0.01" oninput="updateTotalPreview()"></label>
    <label>💳 Credit Card <input type="number" name="creditCard" step="0.01" oninput="updateTotalPreview()"></label>
-   <label>📊 Total Credit Card <input type="number" id="totalCreditPreview" disabled></label>
    <label>💵 Cash <input type="number" name="cash" step="0.01" oninput="updateTotalPreview()"></label>
-   <label>📊 Total Cash <input type="number" id="totalCashPreview" disabled></label>
+   <label>📊 ยอดรวมสุทธิ <input type="text" id="netIncomePreview" disabled></label>
+   <label>📊 ยอดรวมรับ <input type="text" id="totalPreview" disabled></label>
    <label>🕓 เวลาเปิด <input type="time" name="timeOpen"></label>
-  <label>🕕 เวลาปิด <input type="time" name="timeClose"></label>
-
+   <label>🕕 เวลาปิด <input type="time" name="timeClose"></label>
 
    <button type="submit">💾 บันทึก</button>
    <button type="button" onclick="closePopup()">❌ ยกเลิก</button>
@@ -53,313 +109,427 @@
  </div>
  
 <script>
-    // ** URL Backend ที่ Deploy บน Render **
-    const RENDER_BACKEND_URL = 'https://ub-backend.onrender.com';
+    // ** URL Backend ที่ Deploy บน Render **
+    const RENDER_BACKEND_URL = 'https://ub-backend.onrender.com';
 
-    const themeToggle = document.getElementById('theme-toggle');
-    const darkMode = localStorage.getItem('darkMode') === 'true';
-    if (darkMode) document.documentElement.classList.add('dark');
-    themeToggle.innerText = darkMode ? '☀️' : '🌙';
-    themeToggle.onclick = () => {
-        const isDark = document.documentElement.classList.toggle('dark');
-        themeToggle.innerText = isDark ? '☀️' : '🌙';
-        localStorage.setItem('darkMode', isDark);
-    };
+    // Theme toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) document.documentElement.classList.add('dark');
+    themeToggle.innerText = darkMode ? '☀️' : '🌙';
+    themeToggle.onclick = () => {
+        const isDark = document.documentElement.classList.toggle('dark');
+        themeToggle.innerText = isDark ? '☀️' : '🌙';
+        localStorage.setItem('darkMode', isDark);
+    };
 
-    let selectedId = null;
+    let selectedId = null;
+    let currentSalesData = []; // Store fetched data for export
 
-    function openPopup() {
-        document.getElementById("popup").classList.remove("hidden");
-    }
+    function openPopup() {
+        document.getElementById("popup").classList.remove("hidden");
+    }
 
-    function closePopup() {
-        document.getElementById("popup").classList.add("hidden");
-        const form = document.getElementById("add-form");
-        form.reset();
-        form.removeAttribute("data-editing");
-    }
+    function closePopup() {
+        document.getElementById("popup").classList.add("hidden");
+        const form = document.getElementById("add-form");
+        form.reset();
+        form.removeAttribute("data-editing");
+        selectedId = null; // Clear selected ID when closing
+    }
 
-    function clearSelection() {
-        document.getElementById("edit-btn").disabled = true;
-        document.getElementById("delete-btn").disabled = true;
-        selectedId = null;
-    }
+    function clearSelection() {
+        document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected"));
+        document.getElementById("edit-btn").disabled = true;
+        document.getElementById("delete-btn").disabled = true;
+        selectedId = null;
+    }
 
-    function selectEntry(row) {
-        document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected"));
-        row.classList.add("selected");
-        document.getElementById("edit-btn").disabled = false;
-        document.getElementById("delete-btn").disabled = false;
-        selectedId = row.getAttribute("data-id");
-    }
+    function selectEntry(row) {
+        clearSelection();
+        row.classList.add("selected");
+        document.getElementById("edit-btn").disabled = false;
+        document.getElementById("delete-btn").disabled = false;
+        selectedId = row.getAttribute("data-id");
+    }
 
-    function formatMoney(num) {
-        return (num || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 });
-    }
+    function formatMoney(num) {
+        return (num || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+    }
 
-    function updateTotalPreview() {
-        const creditCard = parseFloat(document.querySelector("input[name='creditCard']").value) || 0;
-        const cash = parseFloat(document.querySelector("input[name='cash']").value) || 0;
+    function updateTotalPreview() {
+        const form = document.getElementById("add-form");
+        const income = parseFloat(form.income.value) || 0;
+        const expense = parseFloat(form.expense.value) || 0;
+        const creditCard = parseFloat(form.creditCard.value) || 0;
+        const cash = parseFloat(form.cash.value) || 0;
 
-        document.getElementById("totalCreditPreview").value = creditCard.toLocaleString("th-TH", { minimumFractionDigits: 2 });
-        document.getElementById("totalCashPreview").value = cash.toLocaleString("th-TH", { minimumFractionDigits: 2 });
-    }
-    
-    // โหลดยอดขายตามวันที่
-    async function loadSales() {
-        clearSelection();
-        const listEl = document.getElementById("sales-list");
-        listEl.innerHTML = "⏳ กำลังโหลด...";
+        const netIncome = income - expense;
+        const total = creditCard + cash;
 
-        const startDate = document.getElementById("startDate").value;
-        const endDate = document.getElementById("endDate").value;
-        if (!startDate || !endDate) {
-            listEl.innerHTML = "<p>กรุณาเลือกช่วงวันที่ให้ครบ</p>";
-            return;
-        }
+        document.getElementById("netIncomePreview").value = formatMoney(netIncome);
+        document.getElementById("totalPreview").value = formatMoney(total);
+    }
+    
+    async function loadSales() {
+        clearSelection();
+        const salesTableBody = document.getElementById("sales-table-body");
+        salesTableBody.innerHTML = `<tr><td colspan="11" style="text-align:center;">⏳ กำลังโหลดข้อมูล...</td></tr>`;
+        updateSummary({});
 
-        try {
-            const response = await fetch(`${RENDER_BACKEND_URL}/api/sales?startDate=${startDate}&endDate=${endDate}`);
-            if (!response.ok) throw new Error('Failed to fetch sales data');
-            const salesData = await response.json();
+        const year = document.getElementById('year').value;
+        const startMonth = document.getElementById('startMonth').value;
+        const endMonth = document.getElementById('endMonth').value;
 
-            if (salesData.length === 0) {
-                listEl.innerHTML = "<p>ไม่มีข้อมูล</p>";
-                return;
-            }
+        if (!year || !startMonth || !endMonth) {
+            salesTableBody.innerHTML = `<tr><td colspan="11" style="text-align:center;">กรุณาเลือก ปี, เดือนเริ่มต้น และเดือนสิ้นสุด</td></tr>`;
+            return;
+        }
+        if (parseInt(startMonth) > parseInt(endMonth)) {
+            salesTableBody.innerHTML = `<tr><td colspan="11" style="text-align:center;">เดือนเริ่มต้นต้องน้อยกว่าหรือเท่ากับเดือนสิ้นสุด</td></tr>`;
+            return;
+        }
+        
+        const startDate = `${year}-${String(startMonth).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, endMonth, 0).getDate();
+        const endDate = `${year}-${String(endMonth).padStart(2, '0')}-${lastDay}`;
 
-            let html = `<table class="sales-table"><thead><tr>
-                <th>📅 วันที่</th><th>🧴 Staff Oil</th><th>👥 Customers</th><th>💰 Income</th>
-                <th>📈 Commission</th><th>💹 Extra</th><th>💸 Expense</th><th>💳 Credit</th>
-                <th>💵 Cash</th><th>⏱️ เวลา</th>
-            </tr></thead><tbody>`;
+        try {
+            const response = await fetch(`${RENDER_BACKEND_URL}/api/sales?startDate=${startDate}&endDate=${endDate}`);
+            if (!response.ok) throw new Error('Failed to fetch sales data');
+            const salesData = await response.json();
+            currentSalesData = salesData;
 
-            let totalCredit = 0;
-            let totalCash = 0;
-            let totalIncome = 0;
+            if (salesData.length === 0) {
+                salesTableBody.innerHTML = `<tr><td colspan="11" style="text-align:center;">ไม่มีข้อมูล</td></tr>`;
+                return;
+            }
 
-            salesData.forEach(sale => {
-                // แปลง Firestore timestamp object เป็น Date
-                const date = new Date(sale.date._seconds * 1000); 
-                const dateStr = date.toLocaleDateString("th-TH");
-                const timeWork = sale.timeWork || "-";
-                
-                totalCredit += sale.creditCard || 0;
-                totalCash += sale.cash || 0;
-                totalIncome += sale.income || 0;
+            let html = '';
+            let totalSummary = {
+                staffOil: 0, customers: 0, income: 0, commission: 0, 
+                extraCommission: 0, expense: 0, creditCard: 0, cash: 0, total: 0
+            };
 
-                html += `<tr onclick="selectEntry(this)" data-id="${sale._id}">
-                    <td>${dateStr}</td>
-                    <td>${formatMoney(sale.staffOil)}</td>
-                    <td>${sale.customers}</td>
-                    <td>${formatMoney(sale.income)}</td>
-                    <td>${formatMoney(sale.commission)}</td>
-                    <td>${formatMoney(sale.extraCommission)}</td>
-                    <td>${formatMoney(sale.expense)}</td>
-                    <td>${formatMoney(sale.creditCard)}</td>
-                    <td>${formatMoney(sale.cash)}</td>
-                    <td>${timeWork}</td>
-                </tr>`;
-            });
-            html += `</tbody></table>`;
-            
-            // Add a summary section below the table
-            html += `<div class="summary">
-                <h3>สรุปยอดรวม</h3>
-                <p>ยอดรวมรายรับทั้งหมด: <b>${formatMoney(totalIncome)}</b></p>
-                <p>ยอดรวมบัตรเครดิตทั้งหมด: <b>${formatMoney(totalCredit)}</b></p>
-                <p>ยอดรวมเงินสดทั้งหมด: <b>${formatMoney(totalCash)}</b></p>
-            </div>`;
+            salesData.forEach(sale => {
+                const date = new Date(sale.date._seconds * 1000); 
+                const dateStr = date.toLocaleDateString("th-TH");
+                const netIncome = (sale.income || 0) - (sale.expense || 0);
+                const totalIncome = (sale.creditCard || 0) + (sale.cash || 0);
 
-            listEl.innerHTML = html;
-        } catch (error) {
-            console.error('Error fetching sales data:', error);
-            listEl.innerHTML = `<p>เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}</p>`;
-        }
-    }
+                totalSummary.staffOil += sale.staffOil || 0;
+                totalSummary.customers += sale.customers || 0;
+                totalSummary.income += sale.income || 0;
+                totalSummary.commission += sale.commission || 0;
+                totalSummary.extraCommission += sale.extraCommission || 0;
+                totalSummary.expense += sale.expense || 0;
+                totalSummary.creditCard += sale.creditCard || 0;
+                totalSummary.cash += sale.cash || 0;
+                totalSummary.total += totalIncome || 0;
 
-    async function deleteEntry() {
-        if (!selectedId) return;
-        if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?")) {
-            try {
-                const response = await fetch(`${RENDER_BACKEND_URL}/api/sales/${selectedId}`, {
-                    method: 'DELETE'
-                });
-                if (!response.ok) throw new Error('Failed to delete entry');
-                loadSales();
-                clearSelection();
-            } catch (error) {
-                alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
-            }
-        }
-    }
+                html += `<tr onclick="selectEntry(this)" data-id="${sale._id}">
+                    <td>${dateStr}</td>
+                    <td>${formatMoney(sale.staffOil)}</td>
+                    <td>${sale.customers}</td>
+                    <td>${formatMoney(sale.income)}</td>
+                    <td>${formatMoney(sale.commission)}</td>
+                    <td>${formatMoney(sale.extraCommission)}</td>
+                    <td>${formatMoney(sale.expense)}</td>
+                    <td>${formatMoney(sale.creditCard)}</td>
+                    <td>${formatMoney(sale.cash)}</td>
+                    <td>${formatMoney(netIncome)}</td>
+                    <td>${sale.timeWork || "-"}</td>
+                </tr>`;
+            });
 
-    document.getElementById("add-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const form = e.target;
-        const submitBtn = form.querySelector("button[type='submit']");
-        submitBtn.disabled = true;
+            salesTableBody.innerHTML = html;
+            updateSummary(totalSummary);
+        } catch (error) {
+            console.error('Error fetching sales data:', error);
+            salesTableBody.innerHTML = `<tr><td colspan="11" style="text-align:center;">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}</td></tr>`;
+        }
+    }
+    
+    function updateSummary(totals) {
+        const netIncome = (totals.income || 0) - (totals.expense || 0);
+        document.getElementById('summary-customers').innerText = `${(totals.customers || 0)} คน`;
+        document.getElementById('summary-income').innerText = formatMoney(totals.income);
+        document.getElementById('summary-expense').innerText = formatMoney(totals.expense);
+        document.getElementById('summary-net-income').innerText = formatMoney(netIncome);
+        document.getElementById('summary-total').innerText = formatMoney((totals.creditCard || 0) + (totals.cash || 0));
+    }
 
-        const timeOpen = form.timeOpen.value;
-        const timeClose = form.timeClose.value;
+    async function deleteEntry() {
+        if (!selectedId) return;
+        if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?")) {
+            try {
+                const response = await fetch(`${RENDER_BACKEND_URL}/api/sales/${selectedId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error('Failed to delete entry');
+                loadSales();
+                clearSelection();
+            } catch (error) {
+                alert("เกิดข้อผิดพลาดในการลบข้อมูล: " + error.message);
+            }
+        }
+    }
 
-        // Note: The new `date` field will be saved in a new format.
-        const data = {
-            date: new Date(form.date.value), // Convert string to Date object for backend
-            staffOil: parseFloat(form.staffOil.value) || 0,
-            customers: parseInt(form.customers.value) || 0,
-            income: parseFloat(form.income.value) || 0,
-            commission: parseFloat(form.commission.value) || 0,
-            extraCommission: parseFloat(form.extraCommission.value) || 0,
-            expense: parseFloat(form.expense.value) || 0,
-            creditCard: parseFloat(form.creditCard.value) || 0,
-            cash: parseFloat(form.cash.value) || 0,
-            timeWork: `${timeOpen} - ${timeClose}`
-        };
+    document.getElementById("add-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = form.querySelector("button[type='submit']");
+        submitBtn.disabled = true;
 
-        try {
-            let response;
-            const method = form.getAttribute("data-editing") === "true" && selectedId ? 'PUT' : 'POST';
-            const url = method === 'PUT' ? `${RENDER_BACKEND_URL}/api/sales/${selectedId}` : `${RENDER_BACKEND_URL}/api/sales`;
+        const timeOpen = form.timeOpen.value;
+        const timeClose = form.timeClose.value;
 
-            response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            if (!response.ok) throw new Error('Failed to save data');
-            
-            closePopup();
-            loadSales();
-            clearSelection();
-        } catch (error) {
-            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + error.message);
-        } finally {
-            submitBtn.disabled = false;
-            form.removeAttribute("data-editing");
-        }
-    });
-    
-    document.getElementById("edit-btn").addEventListener("click", async () => {
-        if (!selectedId) return;
+        const data = {
+            date: new Date(form.date.value),
+            staffOil: parseFloat(form.staffOil.value) || 0,
+            customers: parseInt(form.customers.value) || 0,
+            income: parseFloat(form.income.value) || 0,
+            commission: parseFloat(form.commission.value) || 0,
+            extraCommission: parseFloat(form.extraCommission.value) || 0,
+            expense: parseFloat(form.expense.value) || 0,
+            creditCard: parseFloat(form.creditCard.value) || 0,
+            cash: parseFloat(form.cash.value) || 0,
+            timeWork: `${timeOpen} - ${timeClose}`
+        };
 
-        try {
-            const response = await fetch(`${RENDER_BACKEND_URL}/api/sales/${selectedId}`);
-            if (!response.ok) throw new Error('Failed to fetch sale data');
-            const data = await response.json();
+        try {
+            let response;
+            const method = form.getAttribute("data-editing") === "true" && selectedId ? 'PUT' : 'POST';
+            const url = method === 'PUT' ? `${RENDER_BACKEND_URL}/api/sales/${selectedId}` : `${RENDER_BACKEND_URL}/api/sales`;
 
-            const form = document.getElementById("add-form");
+            response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) throw new Error('Failed to save data');
+            
+            closePopup();
+            loadSales();
+        } catch (error) {
+            alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            form.removeAttribute("data-editing");
+        }
+    });
+    
+    document.getElementById("edit-btn").addEventListener("click", async () => {
+        if (!selectedId) return;
 
-            // แปลง Firestore timestamp object เป็น Date
-            const date = new Date(data.date._seconds * 1000);
-            form.date.value = date.toISOString().split("T")[0];
-            form.staffOil.value = data.staffOil || "";
-            form.customers.value = data.customers || "";
-            form.income.value = data.income || "";
-            form.commission.value = data.commission || "";
-            form.extraCommission.value = data.extraCommission || "";
-            form.expense.value = data.expense || "";
-            form.creditCard.value = data.creditCard || "";
-            form.cash.value = data.cash || "";
-            if (data.timeWork) {
-                const [timeOpen, timeClose] = data.timeWork.split(' - ');
-                form.timeOpen.value = timeOpen || "";
-                form.timeClose.value = timeClose || "";
-            } else {
-                form.timeOpen.value = "";
-                form.timeClose.value = "";
-            }
+        try {
+            const response = await fetch(`${RENDER_BACKEND_URL}/api/sales/${selectedId}`);
+            if (!response.ok) throw new Error('Failed to fetch sale data');
+            const data = await response.json();
 
-            form.setAttribute("data-editing", "true");
-            openPopup();
-            updateTotalPreview();
-        } catch (error) {
-            alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
-        }
-    });
-    
-    async function exportToPdf() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('l');
-        
-        const startDate = document.getElementById("startDate").value;
-        const endDate = document.getElementById("endDate").value;
-        
-        const tableHeaders = ["วันที่", "Staff Oil", "Customers", "Income", "Commission", "Extra", "Expense", "Credit", "Cash", "เวลา"];
-        const tableData = [];
-        
-        const salesRows = document.querySelectorAll("#sales-list table tbody tr");
-        if (salesRows.length === 0) {
-            alert("ไม่มีข้อมูลให้ Export");
-            return;
-        }
-        
-        salesRows.forEach(row => {
-            const rowData = [];
-            row.querySelectorAll('td').forEach(cell => {
-                rowData.push(cell.innerText);
-            });
-            tableData.push(rowData);
-        });
+            const form = document.getElementById("add-form");
 
-        doc.text(`รายงานยอดขายรายวัน`, 15, 15);
-        doc.text(`จากวันที่ ${startDate} ถึง ${endDate}`, 15, 22);
+            const date = new Date(data.date._seconds * 1000);
+            form.date.value = date.toISOString().split("T")[0];
+            form.staffOil.value = data.staffOil || "";
+            form.customers.value = data.customers || "";
+            form.income.value = data.income || "";
+            form.commission.value = data.commission || "";
+            form.extraCommission.value = data.extraCommission || "";
+            form.expense.value = data.expense || "";
+            form.creditCard.value = data.creditCard || "";
+            form.cash.value = data.cash || "";
+            if (data.timeWork) {
+                const [timeOpen, timeClose] = data.timeWork.split(' - ');
+                form.timeOpen.value = timeOpen || "";
+                form.timeClose.value = timeClose || "";
+            } else {
+                form.timeOpen.value = "";
+                form.timeClose.value = "";
+            }
 
-        doc.autoTable({
-            startY: 28,
-            head: [tableHeaders],
-            body: tableData,
-            theme: 'grid'
-        });
+            form.setAttribute("data-editing", "true");
+            openPopup();
+            updateTotalPreview();
+        } catch (error) {
+            alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
+        }
+    });
+    
+    async function exportToPdf() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l');
+        
+        const year = document.getElementById('year').value;
+        const startMonth = document.getElementById('startMonth').options[document.getElementById('startMonth').selectedIndex].text;
+        const endMonth = document.getElementById('endMonth').options[document.getElementById('endMonth').selectedIndex].text;
+        
+        if (currentSalesData.length === 0) {
+            alert("ไม่มีข้อมูลให้ Export");
+            return;
+        }
 
-        doc.save(`ยอดขาย-${startDate}-${endDate}.pdf`);
-    }
+        const tableHeaders = ["วันที่", "Staff Oil", "ลูกค้า", "รายรับ", "ค่ามือ", "ค่ามือพิเศษ", "รายจ่าย", "บัตรเครดิต", "เงินสด", "ยอดสุทธิ", "เวลาทำงาน"];
+        const tableData = currentSalesData.map(sale => {
+            const date = new Date(sale.date._seconds * 1000);
+            const netIncome = (sale.income || 0) - (sale.expense || 0);
+            return [
+                date.toLocaleDateString("th-TH"),
+                formatMoney(sale.staffOil),
+                sale.customers,
+                formatMoney(sale.income),
+                formatMoney(sale.commission),
+                formatMoney(sale.extraCommission),
+                formatMoney(sale.expense),
+                formatMoney(sale.creditCard),
+                formatMoney(sale.cash),
+                formatMoney(netIncome),
+                sale.timeWork || "-"
+            ];
+        });
+        
+        const totals = currentSalesData.reduce((acc, sale) => {
+            acc.income += sale.income || 0;
+            acc.expense += sale.expense || 0;
+            acc.creditCard += sale.creditCard || 0;
+            acc.cash += sale.cash || 0;
+            return acc;
+        }, { income: 0, expense: 0, creditCard: 0, cash: 0 });
+        
+        const totalIncomeTotal = (totals.creditCard || 0) + (totals.cash || 0);
 
-    async function exportToExcel() {
-        const table = document.querySelector("#sales-list table");
-        if (!table) {
-            alert("ไม่มีข้อมูลให้ Export");
-            return;
-        }
-        
-        const ws = XLSX.utils.table_to_sheet(table);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "ยอดขาย");
-        
-        const startDate = document.getElementById("startDate").value;
-        const endDate = document.getElementById("endDate").value;
-        
-        XLSX.writeFile(wb, `ยอดขาย-${startDate}-${endDate}.xlsx`);
-    }
+        tableData.push([
+            'ยอดรวม',
+            '', '',
+            formatMoney(totals.income),
+            '', '',
+            formatMoney(totals.expense),
+            formatMoney(totals.creditCard),
+            formatMoney(totals.cash),
+            formatMoney(totals.income - totals.expense),
+            ''
+        ]);
+        
+        doc.text(`รายงานยอดขายรายวัน`, 15, 15);
+        doc.text(`จาก ${startMonth} ${year} ถึง ${endMonth} ${year}`, 15, 22);
+        doc.text(`ยอดรวมทั้งหมด: ${formatMoney(totalIncomeTotal)} บาท`, 15, 29);
 
-    window.loadSales = loadSales;
-    window.selectEntry = selectEntry;
-    window.deleteEntry = deleteEntry;
-    window.openPopup = openPopup;
-    window.closePopup = closePopup;
-    window.updateTotalPreview = updateTotalPreview;
-    
-    document.getElementById("export-excel").addEventListener("click", exportToExcel);
-    document.getElementById("export-pdf").addEventListener("click", exportToPdf);
+        doc.autoTable({
+            startY: 35,
+            head: [tableHeaders],
+            body: tableData,
+            theme: 'grid'
+        });
 
-    window.onload = () => {
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        doc.save(`ยอดขาย-${startMonth}-${endMonth}-${year}.pdf`);
+    }
 
-        const toDateInputString = (date) => {
-            const y = date.getFullYear();
-            const m = (date.getMonth() + 1).toString().padStart(2, "0");
-            const d = date.getDate().toString().padStart(2, "0");
-            return `${y}-${m}-${d}`;
-        };
+    async function exportToExcel() {
+        if (currentSalesData.length === 0) {
+            alert("ไม่มีข้อมูลให้ Export");
+            return;
+        }
+        
+        const wsData = [
+            ["วันที่", "Staff Oil", "ลูกค้า", "รายรับ", "ค่ามือ", "ค่ามือพิเศษ", "รายจ่าย", "บัตรเครดิต", "เงินสด", "ยอดสุทธิ", "เวลาทำงาน"]
+        ];
+        
+        let totals = {
+            staffOil: 0, customers: 0, income: 0, commission: 0, extraCommission: 0, 
+            expense: 0, creditCard: 0, cash: 0
+        };
 
-        document.getElementById("startDate").value = toDateInputString(firstDay);
-        document.getElementById("endDate").value = toDateInputString(lastDay);
+        currentSalesData.forEach(sale => {
+            const date = new Date(sale.date._seconds * 1000);
+            const netIncome = (sale.income || 0) - (sale.expense || 0);
+            wsData.push([
+                date.toLocaleDateString("th-TH"),
+                sale.staffOil || 0,
+                sale.customers || 0,
+                sale.income || 0,
+                sale.commission || 0,
+                sale.extraCommission || 0,
+                sale.expense || 0,
+                sale.creditCard || 0,
+                sale.cash || 0,
+                netIncome,
+                sale.timeWork || "-"
+            ]);
+            // Update totals
+            totals.staffOil += sale.staffOil || 0;
+            totals.customers += sale.customers || 0;
+            totals.income += sale.income || 0;
+            totals.commission += sale.commission || 0;
+            totals.extraCommission += sale.extraCommission || 0;
+            totals.expense += sale.expense || 0;
+            totals.creditCard += sale.creditCard || 0;
+            totals.cash += sale.cash || 0;
+        });
+        
+        const totalIncomeTotal = (totals.creditCard || 0) + (totals.cash || 0);
 
-        loadSales();
-    };
+        wsData.push([]);
+        wsData.push([
+            'ยอดรวม',
+            totals.staffOil,
+            totals.customers,
+            totals.income,
+            totals.commission,
+            totals.extraCommission,
+            totals.expense,
+            totals.creditCard,
+            totals.cash,
+            totals.income - totals.expense,
+            ''
+        ]);
+        wsData.push([]);
+        wsData.push(['ยอดรวมทั้งหมด', totalIncomeTotal]);
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "ยอดขาย");
+        
+        const year = document.getElementById('year').value;
+        const startMonth = document.getElementById('startMonth').options[document.getElementById('startMonth').selectedIndex].text;
+        const endMonth = document.getElementById('endMonth').options[document.getElementById('endMonth').selectedIndex].text;
+        
+        XLSX.writeFile(wb, `ยอดขาย-${startMonth}-${endMonth}-${year}.xlsx`);
+    }
+
+    window.loadSales = loadSales;
+    window.selectEntry = selectEntry;
+    window.deleteEntry = deleteEntry;
+    window.openPopup = openPopup;
+    window.closePopup = closePopup;
+    window.updateTotalPreview = updateTotalPreview;
+    
+    const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const startMonthSelect = document.getElementById('startMonth');
+    const endMonthSelect = document.getElementById('endMonth');
+    const yearInput = document.getElementById('year');
+    const loadButton = document.getElementById('load-data-btn');
+    
+    monthNames.forEach((name, index) => {
+        const option1 = new Option(name, index + 1);
+        const option2 = new Option(name, index + 1);
+        startMonthSelect.add(option1);
+        endMonthSelect.add(option2);
+    });
+    
+    loadButton.addEventListener('click', loadSales);
+    document.getElementById("export-excel").addEventListener("click", exportToExcel);
+    document.getElementById("export-pdf").addEventListener("click", exportToPdf);
+
+    window.onload = () => {
+        const now = new Date();
+        startMonthSelect.value = now.getMonth() + 1;
+        endMonthSelect.value = now.getMonth() + 1;
+        yearInput.value = now.getFullYear();
+        const salesTableBody = document.getElementById("sales-table-body");
+        salesTableBody.innerHTML = `<tr><td colspan="11" style="text-align:center;">กรุณากด "โหลดข้อมูล" เพื่อดูยอดขาย</td></tr>`;
+        updateSummary({});
+    };
 </script>
 </body>
 </html>
