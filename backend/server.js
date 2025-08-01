@@ -176,19 +176,28 @@ app.get('/api/schedules/:year/:month', checkDbConnection, async (req, res) => {
 
 app.post('/api/schedules', checkDbConnection, async (req, res) => {
     try {
-        const { month, year, schedule, summary } = req.body;
-        const existingSchedule = await Schedule.findOne({ year: year, month: month });
+        const { month, year, schedule } = req.body;
+        
+        // Find an existing schedule document by year and month
+        let existingSchedule = await Schedule.findOne({ year: year, month: month });
 
         if (existingSchedule) {
+            // If exists, update the schedule array. Do NOT touch other fields.
             existingSchedule.schedule = schedule;
-            existingSchedule.summary = summary;
+            
             const updatedSchedule = await existingSchedule.save();
             return res.json(updatedSchedule);
+        } else {
+            // If not exists, create a new one with a clear payload.
+            const newSchedule = new Schedule({
+                month,
+                year,
+                schedule
+                // summary is not needed in the new payload, it can be an empty array by default if specified in schema
+            });
+            const savedSchedule = await newSchedule.save();
+            res.status(201).json(savedSchedule);
         }
-
-        const newSchedule = new Schedule({ month, year, schedule, summary });
-        const savedSchedule = await newSchedule.save();
-        res.status(201).json(savedSchedule);
     } catch (error) {
         console.error('Error saving schedule:', error);
         res.status(500).json({ message: 'Error saving schedule', error: error.message });
