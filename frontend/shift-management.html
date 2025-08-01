@@ -95,17 +95,17 @@
     };
     let lang='th';
     const daysOfWeek=[
-		{val:0,th:'อาทิตย์',en:'Sun'},
-		{val:1,th:'จันทร์',en:'Mon'},
-		{val:2,th:'อังคาร',en:'Tue'},
-		{val:3,th:'พุธ',en:'Wed'},
-		{val:4,th:'พฤหัสบดี',en:'Thu'},
-		{val:5,th:'ศุกร์',en:'Fri'},
-		{val:6,th:'เสาร์',en:'Sat'}];
+    {val:0,th:'อาทิตย์',en:'Sun'},
+    {val:1,th:'จันทร์',en:'Mon'},
+    {val:2,th:'อังคาร',en:'Tue'},
+    {val:3,th:'พุธ',en:'Wed'},
+    {val:4,th:'พฤหัสบดี',en:'Thu'},
+    {val:5,th:'ศุกร์',en:'Fri'},
+    {val:6,th:'เสาร์',en:'Sat'}];
     let employees = [];
     let shifts = [];
     const weeklyOff = {};
-    let currentSchedule = []; // ตัวแปรสำหรับเก็บข้อมูลตารางกะงาน
+    let currentSchedule = []; 
 
     // Helpers
     const monthSelect = document.getElementById('month'),
@@ -263,36 +263,59 @@ function prepareForBackend(sel) {
     function exportPDF(){ html2canvas(pageWrapper,{scale:2}).then(canvas=>{ const{jsPDF}=window.jspdf; const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'}); const pw=pdf.internal.pageSize.getWidth(); const ih=(canvas.height*pw)/canvas.width; let pos=0,left=ih-pdf.internal.pageSize.getHeight(); const img=canvas.toDataURL('image/png'); pdf.addImage(img,'PNG',0,pos,pw,ih); while(left>0){ pos-=pdf.internal.pageSize.getHeight(); pdf.addImage(img,'PNG',0,pos,pw,ih); left-=pdf.internal.pageSize.getHeight(); } pdf.save('schedule.pdf'); }); }
 
     // SAVE to Backend
-    async function saveScheduleToBackend(){ 
-      const btn=document.getElementById('save-cloud'); 
-      btn.disabled=true; 
-      const txt=btn.innerText; 
-      btn.innerText=translations[lang].saving; 
-      const{month,year}=currentMY(); 
-      
-      const payload={
-        month,
-        year,
-        schedule: prepareForBackend('#table-container table tbody'),
-        summary: prepareForBackend('#summary-container table tbody')
-      };
+async function saveScheduleToBackend() {
+  const btn = document.getElementById('save-cloud');
+  btn.disabled = true;
+  const originalText = btn.innerText;
+  btn.innerText = translations[lang].saving;
+  const { month, year } = currentMY();
 
-      try {
-        const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if(!response.ok) throw new Error(response.statusText);
-        btn.innerText=translations[lang].saveSuccess;
-      } catch (e) {
-        console.error('Error saving schedule:', e);
-        btn.innerText=translations[lang].saveFail;
-      } finally {
-        btn.disabled=false;
-        setTimeout(()=>btn.innerText=txt,2000); 
+  try {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const schedule = [];
+    const tableRows = document.querySelectorAll('#table-container table tbody tr');
+
+    // Skip the first row which is for holidays
+    for (let i = 1; i < tableRows.length; i++) {
+      const row = tableRows[i];
+      const employeeName = row.cells[0].innerText;
+      const employeeData = { c0: employeeName };
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const selectElement = row.cells[d].querySelector('select');
+        employeeData[`c${d}`] = selectElement ? selectElement.value : '';
       }
+      schedule.push(employeeData);
     }
+
+    const payload = {
+      month,
+      year,
+      schedule,
+      summary: [] // summary ไม่จำเป็นต้องบันทึก เพราะคำนวณจาก schedule ได้
+    };
+
+    const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to save: ${response.statusText}`);
+    }
+
+    btn.innerText = translations[lang].saveSuccess;
+  } catch (e) {
+    console.error('Error saving schedule:', e);
+    btn.innerText = translations[lang].saveFail;
+  } finally {
+    setTimeout(() => {
+      btn.innerText = originalText;
+      btn.disabled = false;
+    }, 2000);
+  }
+}
 
     // LOAD from Backend
     async function loadFullData() {
