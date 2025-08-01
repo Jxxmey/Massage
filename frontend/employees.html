@@ -8,44 +8,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        .employee-list {
-            list-style: none;
-            padding: 0;
+        /* Employee Table Styles */
+        .employee-table {
             width: 100%;
-            max-width: 500px;
+            max-width: 800px;
             margin: 20px auto;
+            border-collapse: collapse;
             background: var(--card-bg);
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .employee-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
+        .employee-table th, .employee-table td {
+            padding: 12px 15px;
+            text-align: left;
             border-bottom: 1px solid var(--cell-border);
-            transition: background 0.2s;
-        }
-        .employee-item:hover {
-            background: var(--hover-bg);
-        }
-        .employee-item:last-child {
-            border-bottom: none;
-        }
-        .employee-info {
-            display: flex;
-            flex-direction: column;
-        }
-        .employee-name {
-            font-size: 1.1em;
             color: var(--text-color);
         }
-        .employee-position {
-            font-size: 0.9em;
-            color: #888;
+        .employee-table thead th {
+            background-color: var(--table-header-bg);
+            color: var(--header-text);
+            font-weight: 600;
         }
+        .employee-table tbody tr:nth-child(even) {
+            background-color: var(--table-alt-row-bg);
+        }
+        .employee-table tbody tr:hover {
+            background-color: var(--hover-bg);
+        }
+        .employee-table td:last-child {
+            text-align: center;
+        }
+        .no-employee-message {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+
+        /* General Styles (from previous version) */
         .employee-actions button {
-            margin-left: 5px;
+            margin: 0 2px;
             padding: 5px 10px;
             border-radius: 4px;
             cursor: pointer;
@@ -66,16 +67,11 @@
         .delete-btn:hover {
             background: #c0392b;
         }
-        #add-employee-form {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
+        .toolbar {
             margin-top: 20px;
+            text-align: center;
         }
-        #add-employee-form input {
-            flex-grow: 1;
-        }
-        #add-employee-btn {
+        .toolbar button {
             background: var(--button-bg);
             color: var(--header-text);
             border: none;
@@ -84,11 +80,11 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        #add-employee-btn:hover {
+        .toolbar button:hover {
             background: var(--button-bg-hover);
         }
         
-        /* Modal Styles */
+        /* Modal Styles (from previous version) */
         .popup {
             position: fixed;
             top: 0;
@@ -166,7 +162,16 @@
         <div class="toolbar">
             <button onclick="openAddPopup()">➕ เพิ่มพนักงาน</button>
         </div>
-        <ul class="employee-list" id="employee-list"></ul>
+        <table class="employee-table">
+            <thead>
+                <tr>
+                    <th>ชื่อพนักงาน</th>
+                    <th>ตำแหน่ง</th>
+                    <th>การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody id="employee-list"></tbody>
+        </table>
     </div>
 
         <div id="popup" class="popup hidden">
@@ -211,33 +216,36 @@
         }
 
         async function loadEmployees() {
-            employeeList.innerHTML = '<li>กำลังโหลด...</li>';
+            employeeList.innerHTML = `<tr><td colspan="3" class="no-employee-message">กำลังโหลด...</td></tr>`;
             try {
                 const response = await fetch(`${RENDER_BACKEND_URL}/api/employees`);
                 const employees = await response.json();
                 renderEmployees(employees);
             } catch (e) {
                 console.error('Failed to load employees:', e);
-                employeeList.innerHTML = '<li>ไม่สามารถโหลดรายชื่อพนักงานได้</li>';
+                employeeList.innerHTML = `<tr><td colspan="3" class="no-employee-message">ไม่สามารถโหลดรายชื่อพนักงานได้</td></tr>`;
             }
         }
 
         function renderEmployees(employees) {
             employeeList.innerHTML = '';
+            if (employees.length === 0) {
+                employeeList.innerHTML = `<tr><td colspan="3" class="no-employee-message">ไม่มีพนักงานในระบบ</td></tr>`;
+                return;
+            }
             employees.forEach(employee => {
-                const li = document.createElement('li');
-                li.className = 'employee-item';
-                li.innerHTML = `
-                    <div class="employee-info">
-                        <span class="employee-name">${employee.Name}</span>
-                        <span class="employee-position">${employee.Position}</span>
-                    </div>
-                    <div class="employee-actions">
-                        <button class="edit-btn" onclick="editEmployee('${employee._id}')">✏️ แก้ไข</button>
-                        <button class="delete-btn" onclick="deleteEmployee('${employee._id}')">❌ ลบ</button>
-                    </div>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${employee.Name}</td>
+                    <td>${employee.Position}</td>
+                    <td>
+                        <div class="employee-actions">
+                            <button class="edit-btn" onclick="editEmployee('${employee._id}')">✏️ แก้ไข</button>
+                            <button class="delete-btn" onclick="deleteEmployee('${employee._id}')">❌ ลบ</button>
+                        </div>
+                    </td>
                 `;
-                employeeList.appendChild(li);
+                employeeList.appendChild(tr);
             });
         }
 
