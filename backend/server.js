@@ -17,7 +17,6 @@ mongoose.connect(mongoURI)
 
 // --- Schemas และ Models ---
 
-// Schema สำหรับยอดขาย (ปรับปรุง date)
 const salesSchema = new mongoose.Schema({
   date: {
     _seconds: Number,
@@ -35,15 +34,13 @@ const salesSchema = new mongoose.Schema({
 }, { collection: 'sales' });
 const Sale = mongoose.model('Sale', salesSchema);
 
-// Schema สำหรับพนักงาน (ปรับปรุงตาม model ที่ให้มา)
 const employeeSchema = new mongoose.Schema({
-  _id: String, // ใช้ _id เป็นชื่อพนักงาน
-  Name: String,
+  _id: String,
+  Name: String, // แก้ไขให้ตรงกับที่ hard-code ไว้ในเว็บ
   Position: String
 }, { collection: 'Employee' });
 const Employee = mongoose.model('Employee', employeeSchema);
 
-// Schema สำหรับกะงาน (เพิ่มเข้ามาใหม่ตาม model ที่ให้มา)
 const shiftSchema = new mongoose.Schema({
   name: String,
   desc: String,
@@ -52,7 +49,6 @@ const shiftSchema = new mongoose.Schema({
 }, { collection: 'Shift' });
 const Shift = mongoose.model('Shift', shiftSchema);
 
-// Schema สำหรับตารางกะงาน
 const scheduleSchema = new mongoose.Schema({
   year: Number,
   month: Number,
@@ -62,13 +58,6 @@ const scheduleSchema = new mongoose.Schema({
 }, { collection: 'schedules' });
 const Schedule = mongoose.model('Schedule', scheduleSchema);
 
-// Schema สำหรับวันหยุดพิเศษ
-const holidaySchema = new mongoose.Schema({
-  date: String,
-  th: String,
-  en: String
-}, { collection: 'holidays' });
-const Holiday = mongoose.model('Holiday', holidaySchema);
 
 // --- API Endpoints ---
 
@@ -76,26 +65,21 @@ const Holiday = mongoose.model('Holiday', holidaySchema);
 app.get('/api/sales', async (req, res) => {
   const { startDate, endDate } = req.query;
   const query = {};
-
   if (startDate && endDate) {
     try {
         const start = new Date(startDate);
         const end = new Date(endDate);
-        query.date = {
-          $gte: start,
-          $lte: end
-        };
+        query.date = { $gte: start, $lte: end };
     } catch (e) {
       return res.status(400).json({ message: 'Invalid date format' });
     }
   }
-
   try {
     const sales = await Sale.find(query).sort({ date: 1 });
     res.json(sales);
   } catch (error) {
     console.error('Error fetching sales:', error);
-    res.status(500).json({ message: 'Error fetching sales', error });
+    res.status(500).json({ message: 'Error fetching sales', error: error.message });
   }
 });
 
@@ -105,17 +89,19 @@ app.get('/api/employees', async (req, res) => {
     const employees = await Employee.find({});
     res.json(employees);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching employees', error });
+    console.error('Error fetching employees:', error);
+    res.status(500).json({ message: 'Error fetching employees', error: error.message });
   }
 });
 
-// API สำหรับ Shift (ใหม่)
+// API สำหรับ Shift
 app.get('/api/shifts', async (req, res) => {
   try {
     const shifts = await Shift.find({}).sort({ order: 1 });
     res.json(shifts);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching shifts', error });
+    console.error('Error fetching shifts:', error);
+    res.status(500).json({ message: 'Error fetching shifts', error: error.message });
   }
 });
 
@@ -125,7 +111,8 @@ app.post('/api/shifts', async (req, res) => {
     const savedShift = await newShift.save();
     res.status(201).json(savedShift);
   } catch (error) {
-    res.status(500).json({ message: 'Error saving shift', error });
+    console.error('Error saving shift:', error);
+    res.status(500).json({ message: 'Error saving shift', error: error.message });
   }
 });
 
@@ -135,7 +122,8 @@ app.put('/api/shifts/:id', async (req, res) => {
     const updatedShift = await Shift.findByIdAndUpdate(id, req.body, { new: true });
     res.json(updatedShift);
   } catch (error) {
-    res.status(500).json({ message: 'Error updating shift', error });
+    console.error('Error updating shift:', error);
+    res.status(500).json({ message: 'Error updating shift', error: error.message });
   }
 });
 
@@ -145,11 +133,47 @@ app.delete('/api/shifts/:id', async (req, res) => {
     await Shift.findByIdAndDelete(id);
     res.status(204).end();
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting shift', error });
+    console.error('Error deleting shift:', error);
+    res.status(500).json({ message: 'Error deleting shift', error: error.message });
   }
 });
 
-// ... ส่วนของ API Endpoints อื่นๆ (Schedules, Holidays) ที่มีอยู่แล้ว
+
+// API สำหรับ Schedules
+app.get('/api/schedules/:year/:month', async (req, res) => {
+    try {
+        const { year, month } = req.params;
+        const schedule = await Schedule.findOne({ year: year, month: month });
+        if (!schedule) {
+            return res.status(404).json({ message: 'Schedule not found' });
+        }
+        res.json(schedule);
+    } catch (error) {
+        console.error('Error fetching schedule:', error);
+        res.status(500).json({ message: 'Error fetching schedule', error: error.message });
+    }
+});
+
+app.post('/api/schedules', async (req, res) => {
+    try {
+        const { month, year, schedule, summary } = req.body;
+        const existingSchedule = await Schedule.findOne({ year: year, month: month });
+
+        if (existingSchedule) {
+            existingSchedule.schedule = schedule;
+            existingSchedule.summary = summary;
+            const updatedSchedule = await existingSchedule.save();
+            return res.json(updatedSchedule);
+        }
+
+        const newSchedule = new Schedule({ month, year, schedule, summary });
+        const savedSchedule = await newSchedule.save();
+        res.status(201).json(savedSchedule);
+    } catch (error) {
+        console.error('Error saving schedule:', error);
+        res.status(500).json({ message: 'Error saving schedule', error: error.message });
+    }
+});
 
 // --- เริ่ม Server ---
 app.listen(PORT, () => {

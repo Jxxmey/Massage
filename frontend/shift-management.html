@@ -3,372 +3,353 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>📅 จัดกะงาน / Shift Scheduler</title>
-   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1828/1828911.png" type="image/png" />
-  <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;700&display=swap" rel="stylesheet" />
+  <title>📄 ตารางกะงาน</title>
+     <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2921/2921222.png" type="image/png" />
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-color: #fff5f8;
+      --text-color: #333;
+      --card-bg: #ffeef5;
+      --card-shadow: rgba(255, 132, 173, 0.2);
+      --header-bg: #ec5c94;
+      --header-text: #fff;
+      --button-bg: #ff80ab;
+      --button-bg-hover: #ec5c94;
+      --cell-border: #f8a5c2;
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+      --text-color: #333;
+      --card-bg: #fff;
+      --card-shadow: rgba(0,0,0,0.08);
+      --header-bg: #2980b9;
+      --header-text: #fff;
+      --button-bg: #3498db;
+      --button-bg-hover: #2980b9;
+      --cell-border: #ddd;
+    }
+    .dark {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --card-bg: #1f1f1f;
+      --card-shadow: rgba(0,0,0,0.5);
+      --header-bg: #1f1f1f;
+      --header-text: #e0e0e0;
+      --button-bg: #444;
+      --button-bg-hover: #555;
+      --cell-border: #444;
+    }
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: var(--bg-color) url('scheduler-bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      backdrop-filter: blur(4px) brightness(1.05);
 
+      background: var(--bg-color);
+      margin: 0;
+      padding: 20px;
+      color: var(--text-color);
+    }
+    a.back {
+      display: inline-block;
+      margin-bottom: 15px;
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #controls, #sidebar {
+      background: var(--card-bg);
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px var(--card-shadow);
+      margin-bottom: 20px;
+    }
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    #controls label, #controls select, #controls input, #controls button {
+      margin-right: 8px;
+    }
+    #sidebar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    #offs, #special, #legend {
+      flex: 1 1 300px;
+    }
+    select, input {
+      padding: 6px;
+      border: 1px solid var(--cell-border);
+      border-radius: 4px;
+      background: var(--card-bg);
+      color: var(--text-color);
+    }
+    button, #lang-toggle, #theme-toggle {
+      background: var(--button-bg);
+      color: var(--header-text);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover, #lang-toggle:hover, #theme-toggle:hover {
+      background: var(--button-bg-hover);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      background: var(--card-bg);
+      box-shadow: 0 1px 4px var(--card-shadow);
+    }
+    th, td {
+      border: 1px solid var(--cell-border);
+      padding: 6px;
+      text-align: center;
+      font-size: 13px;
+      white-space: pre-line;
+      background: var(--card-bg);
+      color: var(--text-color);
+    }
+    th {
+      background: var(--header-bg);
+      color: var(--header-text);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    td:first-child { font-weight: 500; }
+    .shift-A { background: #aed6f1; }
+    .shift-B { background: #a9dfbf; }
+    .shift-L { background: #33FFFF; }
+    .shift-C { background: #f9e79f; }
+    .shift-PD { background: #fadbd8; }
+    .shift-LA { background: #d6eaf8; }
+    .shift-S { background: #f5cba7; }
+    .shift-OFF { background: #FF4500; }
+    #table-container, #summary-container { overflow-x: auto; }
+    .holiday-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .delete-btn { background: transparent; color: red; border: none; font-size: 16px; cursor: pointer; }
+  </style>
 </head>
 <body>
-  <a href="index.html" class="back">← กลับหน้าหลัก</a>
-  <script>const user=JSON.parse(localStorage.getItem('user')); if(!user) location.href='login.html';</script>
   <header>
-    <h1 data-i18n="title"></h1>
-    <div><button id="lang-toggle">EN</button><button id="theme-toggle">🌙</button></div>
+     <a href="index.html" class="back">← กลับหน้าหลัก</a>
+   <h2 id="title">📄 ตารางกะงาน</h2>
+    <div>
+      <select id="month"></select>
+      <input type="number" id="year" min="2000" />
+      <button id="load-btn">โหลด</button>
+      <button id="theme-toggle">🌙</button>
+      <button id="lang-toggle">EN</button>
+    </div>
   </header>
-
-  <section id="controls">
-    <label data-i18n="month"></label>
-    <select id="month"></select>
-    <label data-i18n="year"></label>
-    <input type="number" id="year" min="2000" />
-    <button id="export-excel" data-i18n="exportExcel"></button>
-    <button id="export-pdf" data-i118n="exportPdf"></button>
-    <button id="save-cloud" data-i18n="saveCloud"></button>
-  </section>
-
-  <section id="sidebar">
-    <div id="offs"><h3 data-i18n="weeklyOff"></h3><div id="off-inputs"></div></div>
-    <div id="special">
-      <h3 data-i18n="publicHolidays"></h3>
-      <input type="date" id="new-holiday-date" />
-      <input type="text" id="new-holiday-name" placeholder="" />
-      <button id="add-holiday" data-i18n="addHoliday"></button>
-      <ul id="public-holiday-list"></ul>
-    </div>
-    <div id="legend">
-      <h3 data-i18n="legend"></h3>
-      <ul>
-        <li><span class="shift-A">A</span>   10:30-18:00</li>
-        <li><span class="shift-B">B</span>   18:00-02:00</li>
-        <li><span class="shift-L">L</span>   11:00-19:00</li>
-        <li><span class="shift-C">C</span>   Over Time</li>
-        <li><span class="shift-PD">PD</span>   Public Holiday</li>
-        <li><span class="shift-LA">LA</span>   Leave</li>
-        <li><span class="shift-S">S</span>   Sick</li>
-        <li><span class="shift-OFF">OFF</span>   Off Day</li>
-      </ul>
-    </div>
-  </section>
-
-  <section id="export-area">
-    <div id="page-wrapper">
-      <div id="table-container"></div>
-      <div id="summary-container"></div>
-    </div>
-  </section>
+  <div id="table-container"></div>
 
   <script>
     // ** เปลี่ยน URL ตรงนี้ให้เป็น URL ของ Backend ที่คุณ Deploy บน Render **
     const RENDER_BACKEND_URL = 'https://ub-backend.onrender.com';
 
-    // Theme toggle
-    const themeToggle = document.getElementById('theme-toggle');
-    const darkMode = localStorage.getItem('darkMode') === 'true';
-    if (darkMode) document.documentElement.classList.add('dark');
-    themeToggle.innerText = darkMode ? '☀️' : '🌙';
-    themeToggle.onclick = () => {
-      const isDark = document.documentElement.classList.toggle('dark');
-      themeToggle.innerText = isDark ? '☀️' : '🌙';
-      localStorage.setItem('darkMode', isDark);
+    let lang = 'th';
+    let employees = []; 
+    const shifts = ['','A','B','L','C','PD','S','LA','OFF'];
+    const daysOfWeek = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+    const translations = {
+      th: { title: '📄 ตารางกะงาน', employee: 'พนักงาน' },
+      en: { title: '📄 Shift Schedule', employee: 'Employee' }
     };
 
-    // Constants & translations
-    let holidays = [];
     const defaultHolidays = [
       {date:'2025-01-01',th:'วันขึ้นปีใหม่',en:"New Year's Day"},
       {date:'2025-02-12',th:'วันมาฆบูชา',en:'Makha Bucha'},
       {date:'2025-04-13',th:'วันสงกรานต์',en:'Songkran'},
       {date:'2025-05-01',th:'วันแรงงาน',en:'Labour Day'},
-      {date:'2025-07-28',th:'วันเฉลิมฯ รัชกาลที่10',en:'King Maha BD'},
+      {date:'2025-07-28',th:'วันเฉลิมฯ ร.10',en:'King Maha BD'},
       {date:'2025-08-12',th:'วันแม่แห่งชาติ',en:"Mother’s Day"},
       {date:'2025-10-23',th:'วันปิยมหาราช',en:'Chulalongkorn Day'},
       {date:'2025-12-05',th:'วันพ่อแห่งชาติ',en:"Father’s Day"},
       {date:'2025-12-31',th:'วันสิ้นปี',en:'New Year Eve'}
     ];
-    const translations = {
-      th: {title:'📅 จัดการตารางงาน',month:'เดือน',year:'ปี',exportExcel:'ส่งออก Excel',exportPdf:'ส่งออก PDF',saveCloud:'บันทึก Cloud',saving:'กำลังบันทึก...',saveSuccess:'บันทึกสำเร็จ',saveFail:'บันทึกไม่สำเร็จ',weeklyOff:'วันหยุดประจำสัปดาห์',publicHolidays:'วันหยุดพิเศษ',addHoliday:'เพิ่มวันหยุด',legend:'คำอธิบาย',employee:'พนักงาน'},
-      en: {title:'📅 Shift Scheduler',month:'Month',year:'Year',exportExcel:'Export Excel',exportPdf:'Export PDF',saveCloud:'Save Cloud',saving:'Saving...',saveSuccess:'Saved successfully',saveFail:'Save failed',weeklyOff:'Weekly Off',publicHolidays:'Public Holidays',addHoliday:'Add Holiday',legend:'Legend',employee:'Employee'}
+    let holidays = [...defaultHolidays]; // ใช้ข้อมูล hard-coded เท่านั้น
+
+    const monthSel = document.getElementById('month');
+    const yearInput = document.getElementById('year');
+    const container = document.getElementById('table-container');
+    const title = document.getElementById('title');
+
+    for (let i = 1; i <= 12; i++) {
+      const opt = new Option(i, i);
+      monthSel.appendChild(opt);
+    }
+    const today = new Date();
+    monthSel.value = today.getMonth() + 1;
+    yearInput.value = today.getFullYear();
+
+    document.getElementById('load-btn').onclick = loadSchedule;
+    document.getElementById('theme-toggle').onclick = () => {
+      document.documentElement.classList.toggle('dark');
     };
-    let lang='th';
-    const daysOfWeek=[
-    {val:0,th:'อาทิตย์',en:'Sun'},
-    {val:1,th:'จันทร์',en:'Mon'},
-    {val:2,th:'อังคาร',en:'Tue'},
-    {val:3,th:'พุธ',en:'Wed'},
-    {val:4,th:'พฤหัสบดี',en:'Thu'},
-    {val:5,th:'ศุกร์',en:'Fri'},
-    {val:6,th:'เสาร์',en:'Sat'}];
-    let employees = [];
-    let shifts = []; 
-    let shiftDescriptions = {}; 
-    const weeklyOff={};
+    document.getElementById('lang-toggle').onclick = () => {
+      lang = lang === 'th' ? 'en' : 'th';
+      document.getElementById('lang-toggle').innerText = lang === 'th' ? 'EN' : 'ไทย';
+      title.innerText = translations[lang].title;
+      loadSchedule();
+    };
 
-    // Helpers
-    const monthSelect = document.getElementById('month'),
-          yearInput   = document.getElementById('year'),
-          pageWrapper = document.getElementById('page-wrapper'),
-          tableContainer   = document.getElementById('table-container'),
-          summaryContainer = document.getElementById('summary-container'),
-          newHolidayDate   = document.getElementById('new-holiday-date'),
-          newHolidayName   = document.getElementById('new-holiday-name'),
-          addHolidayBtn    = document.getElementById('add-holiday'),
-          publicHolidayList= document.getElementById('public-holiday-list'),
-          offInputs        = document.getElementById('off-inputs');
-
-    function currentMY(){ return { month:+monthSelect.value, year:+yearInput.value }; }
-    function colorShift(td,val){ td.className=td.className.replace(/\bshift-\w+/g,''); if(val) td.classList.add(`shift-${val}`); }
-    
-    function aoa(sel) {
-      return Array.from(document.querySelector(sel).rows).map(r =>
-        Array.from(r.cells).map(c => {
-          const s = c.querySelector('select');
-          if (s) return s.value || '';
-          return c.textContent.trim();
-        })
-      );
-    }
-
-    function prepareForFirestore(sel) {
-      const rows = aoa(sel);
-      return rows.map((row, rowIndex) => {
-        return row.reduce((o, v, colIndex) => {
-          o[`c${colIndex}`] = v || '';
-          return o;
-        }, {});
-      });
-    }
-
-    // Rendering
-    function initControls(){
-      for(let i=1;i<=12;i++) monthSelect.appendChild(new Option(i,i));
-      monthSelect.value=new Date().getMonth()+1;
-      yearInput.value=new Date().getFullYear();
-      monthSelect.onchange=redrawAll; yearInput.onchange=redrawAll;
-      document.getElementById('export-excel').onclick=exportExcel;
-      document.getElementById('export-pdf').onclick=exportPDF;
-      document.getElementById('save-cloud').onclick=saveScheduleToMongoDB;
-      document.getElementById('lang-toggle').onclick=()=>{
-        lang=lang==='th'?'en':'th';
-        document.getElementById('lang-toggle').innerText=lang==='th'?'EN':'ไทย';
-        setTexts(); redrawAll(); initOffInputs();
-      };
-    }
-    function setTexts(){ document.querySelectorAll('[data-i18n]').forEach(el=>el.innerText=translations[lang][el.dataset.i18n]);
-      newHolidayName.placeholder=lang==='th'?'ชื่อวันหยุด':'Holiday name';
-      addHolidayBtn.innerText=translations[lang].addHoliday;
-    }
-    function bindHolidayControls(){ addHolidayBtn.onclick=()=>{ const d=newHolidayDate.value,n=newHolidayName.value.trim(); if(!d||!n)return; holidays.push({date:d,th:n,en:n}); newHolidayDate.value=newHolidayName.value=''; redrawAll(); }; }
-    function renderHolidayList(){ publicHolidayList.innerHTML=''; const {month,year}=currentMY(); holidays.filter(h=>h.date.startsWith(`${year}-${String(month).padStart(2,'0')}`)).sort((a,b)=>a.date.localeCompare(b.date)).forEach(h=>{ const li=document.createElement('li'); li.className='holiday-item'; li.innerHTML=`<span>${h.date.slice(-2)}/${h.date.slice(5,7)}   ${lang==='th'?h.th:h.en}</span>`; const del=document.createElement('button'); del.className='delete-btn'; del.textContent='✕'; del.onclick=()=>{holidays=holidays.filter(x=>x!==h); redrawAll();}; li.appendChild(del); publicHolidayList.appendChild(li); }); }
-    
-    // ปรับปรุงฟังก์ชัน initOffInputs
-    function initOffInputs(){ offInputs.innerHTML=''; employees.forEach(e=>{ const div=document.createElement('div'); div.innerHTML=`${e}: `; const sel=document.createElement('select'); daysOfWeek.forEach(dw=>sel.appendChild(new Option(lang==='th'?dw.th:dw.en,dw.val))); sel.value=weeklyOff[e]||''; sel.onchange=()=>{ weeklyOff[e]=sel.value===''?null:+sel.value; redrawAll(); }; div.appendChild(sel); offInputs.appendChild(div); }); }
-    
-    // ปรับปรุงฟังก์ชัน buildSchedule
-    function buildSchedule(){ 
-      const {month,year}=currentMY(); 
-      const days=new Date(year,month,0).getDate(); 
-      const tbl=document.createElement('table'); 
-      const thead=tbl.createTHead(), row=thead.insertRow(); 
-      row.appendChild(document.createElement('th')).innerText=translations[lang].employee; 
-      for(let d=1;d<=days;d++){ 
-        const dow=new Date(year,month-1,d).getDay(); 
-        const th=document.createElement('th'); 
-        th.innerText=`${d}\n${lang==='th'?daysOfWeek[dow].th:daysOfWeek[dow].en}`; 
-        row.appendChild(th);
-      } 
-      const tbody=tbl.appendChild(document.createElement('tbody')); 
-      const holTr=tbody.insertRow(); 
-      holTr.appendChild(document.createElement('td')).innerText=translations[lang].publicHolidays; 
-      for(let d=1;d<=days;d++){ 
-        const td=holTr.insertCell(); 
-        const iso=`${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`; 
-        if(holidays.find(h=>h.date===iso)){
-          td.innerText='PD';
-          td.classList.add('shift-PD');
-        }
-      } 
-      employees.forEach(emp=>{ 
-        const tr=tbody.insertRow(); 
-        const td=document.createElement('td');
-        td.innerText=emp;
-        td.addEventListener('drop',()=> {});
-        tr.appendChild(td); 
-        for(let d=1;d<=days;d++){ 
-          const td=tr.insertCell(); 
-          const sel=document.createElement('select'); 
-          shifts.forEach(s=>sel.appendChild(new Option(s,s)));
-          sel.oninput=()=>{
-            colorShift(td,sel.value);      
-            updateSummary();
-            const btn = document.getElementById('save-cloud');
-            btn.innerText = '✅ โหลดเสร็จแล้ว';
-            setTimeout(() => btn.innerText = translations[lang].saveCloud, 2000);
-          }; 
-          td.appendChild(sel); 
-          const date=new Date(year,month-1,d); 
-          if(weeklyOff[emp]!=null&&date.getDay()===weeklyOff[emp]){ 
-            sel.value='OFF';
-            colorShift(td,'OFF');
-          }
-        }
-      }); 
-      return tbl; 
-    }
-    
-    // ปรับปรุงฟังก์ชัน updateSummary และ buildSummary
-    function updateSummary(){ summaryContainer.innerHTML=''; summaryContainer.appendChild(buildSummary()); }
-    function buildSummary(){ 
-      const tbl=document.createElement('table'); 
-      const thead=tbl.createTHead(), row=thead.insertRow(); 
-      row.appendChild(document.createElement('th')).innerText=translations[lang].employee; 
-      shifts.filter(s=>s).forEach(s=>row.appendChild(document.createElement('th')).innerText=s); 
-      const tbody=tbl.appendChild(document.createElement('tbody')); 
-      employees.forEach(emp=>{ 
-        const tr=tbody.insertRow(); 
-        const td=document.createElement('td');
-        td.innerText=emp;
-        
-        
-        td.addEventListener('drop',()=> {
-          
-        });
-        tr.appendChild(td); 
-        const counts=Object.fromEntries(shifts.map(s=>[s,0])); 
-        document.querySelectorAll('#table-container tbody tr').forEach(r=>{ 
-          if(r.firstChild.innerText===emp) 
-            r.querySelectorAll('td select').forEach(sel=>counts[sel.value]++); 
-        }); 
-        shifts.filter(s=>s).forEach(s=>tr.appendChild(document.createElement('td')).innerText=counts[s]); 
-      }); 
-      return tbl; 
-    }
-    function redrawAll(){ setTexts(); renderHolidayList(); tableContainer.innerHTML=''; tableContainer.appendChild(buildSchedule()); updateSummary(); }
-
-    // EXPORT
-    function exportExcel(){ const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa('#table-container table')),'Schedule'); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa('#summary-container table')),'Summary'); XLSX.writeFile(wb,'schedule.xlsx'); }
-    function exportPDF(){ html2canvas(pageWrapper,{scale:2}).then(canvas=>{ const{jsPDF}=window.jspdf; const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'}); const pw=pdf.internal.pageSize.getWidth(); const ih=(canvas.height*pw)/canvas.width; let pos=0,left=ih-pdf.internal.pageSize.getHeight(); const img=canvas.toDataURL('image/png'); pdf.addImage(img,'PNG',0,pos,pw,ih); while(left>0){ pos-=pdf.internal.pageSize.getHeight(); pdf.addImage(img,'PNG',0,pos,pw,ih); left-=pdf.internal.pageSize.getHeight(); } pdf.save('schedule.pdf'); }); }
-
-    // SAVE to MongoDB (manual)
-    async function saveScheduleToMongoDB(){ 
-      const btn=document.getElementById('save-cloud'); 
-      btn.disabled=true; 
-      const txt=btn.innerText; 
-      btn.innerText=translations[lang].saving; 
-      const{month,year}=currentMY(); 
-      const payload={
-        month,
-        year,
-        schedule:prepareForFirestore('#table-container table tbody'),
-        summary:prepareForFirestore('#summary-container table tbody')
-      };
-      
+    // เปลี่ยนชื่อฟังก์ชันเป็น loadEmployeesAndShifts เนื่องจากไม่มี Holidays แล้ว
+    async function loadEmployeesAndShifts() {
       try {
-        const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!response.ok) throw new Error('Failed to save data');
-        btn.innerText=translations[lang].saveSuccess;
-      } catch (e) {
-        console.error(e);
-        btn.innerText=translations[lang].saveFail;
-      } finally {
-        btn.disabled=false;
-        setTimeout(()=>btn.innerText=txt,2000);
-      }
-    }
-
-    // LOAD from MongoDB
-    async function loadScheduleFromMongoDB(){
-      const { month, year } = currentMY();
-      const url = `${RENDER_BACKEND_URL}/api/schedules/${year}/${month}`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to load schedule');
-        const doc = await response.json();
-        if (!doc || !doc.schedule) return;
-        const rows = doc.schedule;
-        const tbodyRows = document.querySelectorAll('#table-container table tbody tr');
-        tbodyRows.forEach((tr, i) => {
-          const rowObj = rows[i];
-          if (!rowObj) return;
-          Object.keys(rowObj)
-            .sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
-            .forEach((key, cidx) => {
-              const rawVal = rowObj[key];
-              const val = (typeof rawVal === 'string')
-                ? rawVal.split(/\r?\n/)[0]
-                : rawVal;
-              const cell = tr.cells[cidx];
-              const sel = cell.querySelector('select');
-              if (sel) {
-                if (shifts.includes(val)) {
-                sel.value = val;
-                colorShift(cell, val);
-              }
-              } else if (val && shifts.includes(val)) {
-                cell.innerText = val;
-                colorShift(cell, val);
-              }
-            });
-        });
-        updateSummary();
-      } catch(e) {
-        console.error('❌ Load error', e);
-      }
-    }
-
-    async function loadEmployeesAndHolidays() {
-      try {
-        const [empRes, holRes, shiftRes] = await Promise.all([
+        const [employeesRes, shiftsRes] = await Promise.allSettled([
           fetch(`${RENDER_BACKEND_URL}/api/employees`),
-          fetch(`${RENDER_BACKEND_URL}/api/holidays`),
           fetch(`${RENDER_BACKEND_URL}/api/shifts`)
         ]);
-        const empData = await empRes.json();
-        employees = empData.map(e => e.Name); // ดึงจากฟิลด์ 'Name'
-        const customHolidays = await holRes.json();
-        holidays = [...defaultHolidays, ...customHolidays];
-        const shiftData = await shiftRes.json();
-        // สร้าง Shift descriptions และ shifts array
-        shiftDescriptions = shiftData.reduce((acc, s) => {
-            acc[s.name] = s.desc;
-            return acc;
-        }, {});
-        shifts = [''].concat(shiftData.map(s => s.name));
-        
-        // อัปเดต legend ในหน้าเว็บ
-        const legendList = document.querySelector('#legend ul');
-        legendList.innerHTML = '';
-        shifts.filter(s => s).forEach(s => {
-            const li = document.createElement('li');
-            li.innerHTML = `<li><span class="shift-${s}">${s}</span>   ${shiftDescriptions[s] || ''}</li>`;
-            legendList.appendChild(li);
-        });
+
+        // Process Employees
+        if (employeesRes.status === 'fulfilled' && employeesRes.value.ok) {
+          const empData = await employeesRes.value.json();
+          employees = empData.map(e => e.Name);
+        } else {
+          console.error('❌ โหลดพนักงานล้มเหลว', employeesRes.reason || employeesRes.value.statusText);
+          employees = ["K.Nu", "K.Ning", "K.Chaaem", "K.Som"]; // ใช้ค่า default
+        }
+
+        // Process Shifts
+        if (shiftsRes.status === 'fulfilled' && shiftsRes.value.ok) {
+          const shiftData = await shiftsRes.value.json();
+          shifts.length = 0; // Clear old shifts
+          shifts.push(''); // Add empty shift
+          shiftData.forEach(s => shifts.push(s.name));
+        } else {
+          console.error('❌ โหลดกะงานล้มเหลว', shiftsRes.reason || shiftsRes.value.statusText);
+        }
 
       } catch (e) {
-        console.error('❌ โหลดข้อมูลล้มเหลว', e);
-        // ใช้ค่า default หากการโหลดล้มเหลว
-        employees = ["K.Nu", "K.Ning", "K.Chaaem", "K.Som"]; 
-        holidays = [...defaultHolidays];
-        shifts = ['','A','B','L','C','PD','S','LA','OFF'];
+        console.error('❌ โหลดข้อมูลทั้งหมดล้มเหลว', e);
       }
     }
 
-    window.onload = async () => {
-      initControls();
-      await loadEmployeesAndHolidays();
-      initOffInputs();
-      bindHolidayControls();
-      setTexts();
-      redrawAll();
-      loadScheduleFromMongoDB();
+    async function loadSchedule() {
+      const m = String(monthSel.value).padStart(2, '0');
+      const y = yearInput.value;
+      
+      await loadEmployeesAndShifts(); // เรียกฟังก์ชันใหม่
+
+      try {
+        const response = await fetch(`${RENDER_BACKEND_URL}/api/schedules/${y}/${m}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            container.innerHTML = 'ไม่พบข้อมูลตารางกะงานสำหรับเดือนนี้';
+          } else {
+            throw new Error(`Failed to load schedule: ${response.statusText}`);
+          }
+          return;
+        }
+        const doc = await response.json();
+        if (!doc || !doc.schedule) {
+          container.innerHTML = 'ไม่พบข้อมูลตารางกะงาน';
+          return;
+        }
+        const schedule = doc.schedule;
+        renderTable(schedule, +y, +m, holidays, employees);
+      } catch (e) {
+        console.error('❌ โหลดตารางล้มเหลว', e);
+        container.innerHTML = 'ไม่สามารถโหลดข้อมูลได้';
+      }
+    }
+
+    function renderTable(data, year, month, holidays, employees) {
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const table = document.createElement('table');
+      const thead = table.createTHead();
+      const headRow = thead.insertRow();
+      headRow.insertCell().innerText = translations[lang].employee;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const day = new Date(year, month - 1, d).getDay();
+        const th = headRow.insertCell();
+        th.innerText = `${d}\n${lang === 'th' ? daysOfWeek[day] : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][day]}`;
+      }
+
+      const tbody = table.createTBody();
+
+      const holidayRow = tbody.insertRow();
+      holidayRow.insertCell().innerText = lang === 'th' ? 'วันหยุดพิเศษ' : 'Public Holiday';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const td = holidayRow.insertCell();
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const h = holidays.find(h => h.date === dateStr);
+        if (h) {
+          td.innerText = 'PD';
+          td.classList.add('shift-PD');
+          td.title = h[lang] || h.th;
+        }
+      }
+
+      employees.forEach(name => {
+        const rowObj = data.find(r => r.c0 === name) || {};
+        const tr = tbody.insertRow();
+        tr.insertCell().innerText = name;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const td = tr.insertCell();
+          const val = rowObj[`c${d}`] || '';
+          td.innerText = val;
+          if (shifts.includes(val)) td.classList.add(`shift-${val}`);
+        }
+      });
+      
+      container.innerHTML = '';
+      container.appendChild(table);
+      container.appendChild(document.createElement('br'));
+      container.appendChild(buildSummaryTable(data, daysInMonth, employees));
+    }
+
+    
+    function buildSummaryTable(data, daysInMonth, employees) {
+      const summaryTable = document.createElement('table');
+      const summaryThead = summaryTable.createTHead();
+      const summaryHeadRow = summaryThead.insertRow();
+      summaryHeadRow.insertCell().innerText = translations[lang].employee;
+
+      shifts.filter(s => s).forEach(s => {
+        const th = summaryHeadRow.insertCell();
+        th.innerText = s;
+      });
+
+      const summaryTbody = summaryTable.createTBody();
+      employees.forEach(name => {
+        const rowObj = data.find(r => r.c0 === name) || {};
+        const tr = summaryTbody.insertRow();
+        tr.insertCell().innerText = name;
+
+        const counts = Object.fromEntries(shifts.map(s => [s, 0]));
+        for (let d = 1; d <= daysInMonth; d++) {
+          const val = rowObj[`c${d}`] || '';
+          if (shifts.includes(val)) counts[val]++;
+        }
+
+        shifts.filter(s => s).forEach(s => {
+          const td = tr.insertCell();
+          td.innerText = counts[s];
+        });
+      });
+
+      return summaryTable;
+    }
+
+    window.onload = () => {
+      loadSchedule();
     };
   </script>
 </body>
