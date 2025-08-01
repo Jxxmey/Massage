@@ -1,57 +1,57 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
- <meta charset="UTF-8">
- <title>ระบบบันทึกยอดขาย</title>
- <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3588/3588658.png" type="image/png" />
- <link rel="stylesheet" href="style.css">
- <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
- 
- <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+ <meta charset="UTF-8">
+ <title>ระบบบันทึกยอดขาย</title>
+ <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3588/3588658.png" type="image/png" />
+ <link rel="stylesheet" href="style.css">
+ <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600&display=swap" rel="stylesheet">
+ 
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
- <h1>📊 ระบบบันทึกยอดขายรายวัน</h1>
- <a href="index.html" class="back">← กลับหน้าหลัก</a>
-  <div class="toolbar">
-  <button onclick="openPopup()">➕ Add</button>
-  <button id="edit-btn" disabled>✏️ Edit</button>
-  <button id="delete-btn" disabled onclick="deleteEntry()">❌ Cancel</button>
-  <button id="export-pdf">ส่งออก PDF</button>
-  <button id="export-excel">ส่งออก Excel</button>
- <button id="theme-toggle">🌙</button></div>
+ <h1>📊 ระบบบันทึกยอดขายรายวัน</h1>
+ <a href="index.html" class="back">← กลับหน้าหลัก</a>
+  <div class="toolbar">
+  <button onclick="openPopup()">➕ Add</button>
+  <button id="edit-btn" disabled>✏️ Edit</button>
+  <button id="delete-btn" disabled onclick="deleteEntry()">❌ Cancel</button>
+  <button id="export-pdf">ส่งออก PDF</button>
+  <button id="export-excel">ส่งออก Excel</button>
+ <button id="theme-toggle">🌙</button></div>
 <div>
-  <label>จาก <input type="date" id="startDate" onchange="loadSales()"></label>
-  <label>ถึง <input type="date" id="endDate" onchange="loadSales()"></label>
- </div>
-  <div id="sales-list"></div>
+  <label>จาก <input type="date" id="startDate" onchange="loadSales()"></label>
+  <label>ถึง <input type="date" id="endDate" onchange="loadSales()"></label>
+ </div>
+  <div id="sales-list"></div>
 
-  <div id="popup" class="popup hidden">
-  <div class="popup-content">
-  <h2>เพิ่มรายการยอดขาย</h2>
-  <form id="add-form">
-   <label>📅 วันที่ <input type="date" name="date" required></label>
-   <label>🧴 Staff Oil (บาท) <input type="number" name="staffOil" step="0.01"></label>
-   <label>👥 Customers (คน) <input type="number" name="customers"></label>
-   <label>💰 Total income (บาท) <input type="number" name="income" step="0.01"></label>
-   <label>📈 Commission <input type="number" name="commission" step="0.01"></label>
-   <label>💹 Extra Commission <input type="number" name="extraCommission" step="0.01"></label>
-   <label>💸 Expense <input type="number" name="expense" step="0.01"></label>
-   <label>💳 Credit Card <input type="number" name="creditCard" step="0.01" oninput="updateTotalPreview()"></label>
-   <label>📊 Total Credit Card <input type="number" id="totalCreditPreview" disabled></label>
-   <label>💵 Cash <input type="number" name="cash" step="0.01" oninput="updateTotalPreview()"></label>
-   <label>📊 Total Cash <input type="number" id="totalCashPreview" disabled></label>
-   <label>🕓 เวลาเปิด <input type="time" name="timeOpen"></label>
-  <label>🕕 เวลาปิด <input type="time" name="timeClose"></label>
+  <div id="popup" class="popup hidden">
+  <div class="popup-content">
+  <h2>เพิ่มรายการยอดขาย</h2>
+  <form id="add-form">
+   <label>📅 วันที่ <input type="date" name="date" required></label>
+   <label>🧴 Staff Oil (บาท) <input type="number" name="staffOil" step="0.01"></label>
+   <label>👥 Customers (คน) <input type="number" name="customers"></label>
+   <label>💰 Total income (บาท) <input type="number" name="income" step="0.01"></label>
+   <label>📈 Commission <input type="number" name="commission" step="0.01"></label>
+   <label>💹 Extra Commission <input type="number" name="extraCommission" step="0.01"></label>
+   <label>💸 Expense <input type="number" name="expense" step="0.01"></label>
+   <label>💳 Credit Card <input type="number" name="creditCard" step="0.01" oninput="updateTotalPreview()"></label>
+   <label>📊 Total Credit Card <input type="number" id="totalCreditPreview" disabled></label>
+   <label>💵 Cash <input type="number" name="cash" step="0.01" oninput="updateTotalPreview()"></label>
+   <label>📊 Total Cash <input type="number" id="totalCashPreview" disabled></label>
+   <label>🕓 เวลาเปิด <input type="time" name="timeOpen"></label>
+  <label>🕕 เวลาปิด <input type="time" name="timeClose"></label>
 
 
-   <button type="submit">💾 บันทึก</button>
-   <button type="button" onclick="closePopup()">❌ ยกเลิก</button>
-  </form>
-  </div>
- </div>
- 
+   <button type="submit">💾 บันทึก</button>
+   <button type="button" onclick="closePopup()">❌ ยกเลิก</button>
+  </form>
+  </div>
+ </div>
+ 
 <script>
     // ** URL Backend ที่ Deploy บน Render **
     const RENDER_BACKEND_URL = 'https://ub-backend.onrender.com';
@@ -72,6 +72,39 @@
         document.getElementById("popup").classList.remove("hidden");
     }
 
+    function closePopup() {
+        document.getElementById("popup").classList.add("hidden");
+        const form = document.getElementById("add-form");
+        form.reset();
+        form.removeAttribute("data-editing");
+    }
+
+    function clearSelection() {
+        document.getElementById("edit-btn").disabled = true;
+        document.getElementById("delete-btn").disabled = true;
+        selectedId = null;
+    }
+
+    function selectEntry(row) {
+        document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected"));
+        row.classList.add("selected");
+        document.getElementById("edit-btn").disabled = false;
+        document.getElementById("delete-btn").disabled = false;
+        selectedId = row.getAttribute("data-id");
+    }
+
+    function formatMoney(num) {
+        return (num || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 });
+    }
+
+    function updateTotalPreview() {
+        const creditCard = parseFloat(document.querySelector("input[name='creditCard']").value) || 0;
+        const cash = parseFloat(document.querySelector("input[name='cash']").value) || 0;
+
+        document.getElementById("totalCreditPreview").value = creditCard.toLocaleString("th-TH", { minimumFractionDigits: 2 });
+        document.getElementById("totalCashPreview").value = cash.toLocaleString("th-TH", { minimumFractionDigits: 2 });
+    }
+    
     // โหลดยอดขายตามวันที่
     async function loadSales() {
         clearSelection();
@@ -98,18 +131,22 @@
             let html = `<table class="sales-table"><thead><tr>
                 <th>📅 วันที่</th><th>🧴 Staff Oil</th><th>👥 Customers</th><th>💰 Income</th>
                 <th>📈 Commission</th><th>💹 Extra</th><th>💸 Expense</th><th>💳 Credit</th>
-                <th>🧮 Total Credit</th><th>💵 Cash</th><th>🧮 Total Cash</th><th>⏱️ เวลา</th>
+                <th>💵 Cash</th><th>⏱️ เวลา</th>
             </tr></thead><tbody>`;
 
             let totalCredit = 0;
             let totalCash = 0;
+            let totalIncome = 0;
 
             salesData.forEach(sale => {
-                const dateStr = new Date(sale.date).toLocaleDateString("th-TH");
+                // แปลง Firestore timestamp object เป็น Date
+                const date = new Date(sale.date._seconds * 1000); 
+                const dateStr = date.toLocaleDateString("th-TH");
+                const timeWork = sale.timeWork || "-";
+                
                 totalCredit += sale.creditCard || 0;
                 totalCash += sale.cash || 0;
-                
-                const timeWork = (sale.timeOpen && sale.timeClose) ? `${sale.timeOpen} - ${sale.timeClose}` : "-";
+                totalIncome += sale.income || 0;
 
                 html += `<tr onclick="selectEntry(this)" data-id="${sale._id}">
                     <td>${dateStr}</td>
@@ -120,44 +157,25 @@
                     <td>${formatMoney(sale.extraCommission)}</td>
                     <td>${formatMoney(sale.expense)}</td>
                     <td>${formatMoney(sale.creditCard)}</td>
-                    <td><b>${formatMoney(totalCredit)}</b></td>
                     <td>${formatMoney(sale.cash)}</td>
-                    <td><b>${formatMoney(totalCash)}</b></td>
                     <td>${timeWork}</td>
                 </tr>`;
             });
-
             html += `</tbody></table>`;
+            
+            // Add a summary section below the table
+            html += `<div class="summary">
+                <h3>สรุปยอดรวม</h3>
+                <p>ยอดรวมรายรับทั้งหมด: <b>${formatMoney(totalIncome)}</b></p>
+                <p>ยอดรวมบัตรเครดิตทั้งหมด: <b>${formatMoney(totalCredit)}</b></p>
+                <p>ยอดรวมเงินสดทั้งหมด: <b>${formatMoney(totalCash)}</b></p>
+            </div>`;
+
             listEl.innerHTML = html;
         } catch (error) {
             console.error('Error fetching sales data:', error);
             listEl.innerHTML = `<p>เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error.message}</p>`;
         }
-    }
-
-    function formatMoney(num) {
-        return (num || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 });
-    }
-
-    function clearSelection() {
-        document.getElementById("edit-btn").disabled = true;
-        document.getElementById("delete-btn").disabled = true;
-        selectedId = null;
-    }
-
-    function selectEntry(row) {
-        document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected"));
-        row.classList.add("selected");
-        document.getElementById("edit-btn").disabled = false;
-        document.getElementById("delete-btn").disabled = false;
-        selectedId = row.getAttribute("data-id");
-    }
-
-    function closePopup() {
-        document.getElementById("popup").classList.add("hidden");
-        const form = document.getElementById("add-form");
-        form.reset();
-        form.removeAttribute("data-editing");
     }
 
     async function deleteEntry() {
@@ -176,14 +194,6 @@
         }
     }
 
-    function updateTotalPreview() {
-        const creditCard = parseFloat(document.querySelector("input[name='creditCard']").value) || 0;
-        const cash = parseFloat(document.querySelector("input[name='cash']").value) || 0;
-
-        document.getElementById("totalCreditPreview").value = creditCard.toLocaleString("th-TH", {minimumFractionDigits: 2});
-        document.getElementById("totalCashPreview").value = cash.toLocaleString("th-TH", {minimumFractionDigits: 2});
-    }
-
     document.getElementById("add-form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const form = e.target;
@@ -193,8 +203,9 @@
         const timeOpen = form.timeOpen.value;
         const timeClose = form.timeClose.value;
 
+        // Note: The new `date` field will be saved in a new format.
         const data = {
-            date: form.date.value,
+            date: new Date(form.date.value), // Convert string to Date object for backend
             staffOil: parseFloat(form.staffOil.value) || 0,
             customers: parseInt(form.customers.value) || 0,
             income: parseFloat(form.income.value) || 0,
@@ -203,25 +214,20 @@
             expense: parseFloat(form.expense.value) || 0,
             creditCard: parseFloat(form.creditCard.value) || 0,
             cash: parseFloat(form.cash.value) || 0,
-            timeOpen: timeOpen || "",
-            timeClose: timeClose || ""
+            timeWork: `${timeOpen} - ${timeClose}`
         };
 
         try {
             let response;
-            if (form.getAttribute("data-editing") === "true" && selectedId) {
-                response = await fetch(`${RENDER_BACKEND_URL}/api/sales/${selectedId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-            } else {
-                response = await fetch(`${RENDER_BACKEND_URL}/api/sales`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-            }
+            const method = form.getAttribute("data-editing") === "true" && selectedId ? 'PUT' : 'POST';
+            const url = method === 'PUT' ? `${RENDER_BACKEND_URL}/api/sales/${selectedId}` : `${RENDER_BACKEND_URL}/api/sales`;
+
+            response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
             if (!response.ok) throw new Error('Failed to save data');
             
             closePopup();
@@ -245,7 +251,9 @@
 
             const form = document.getElementById("add-form");
 
-            form.date.value = data.date.split("T")[0];
+            // แปลง Firestore timestamp object เป็น Date
+            const date = new Date(data.date._seconds * 1000);
+            form.date.value = date.toISOString().split("T")[0];
             form.staffOil.value = data.staffOil || "";
             form.customers.value = data.customers || "";
             form.income.value = data.income || "";
@@ -254,17 +262,23 @@
             form.expense.value = data.expense || "";
             form.creditCard.value = data.creditCard || "";
             form.cash.value = data.cash || "";
-            form.timeOpen.value = data.timeOpen || "";
-            form.timeClose.value = data.timeClose || "";
+            if (data.timeWork) {
+                const [timeOpen, timeClose] = data.timeWork.split(' - ');
+                form.timeOpen.value = timeOpen || "";
+                form.timeClose.value = timeClose || "";
+            } else {
+                form.timeOpen.value = "";
+                form.timeClose.value = "";
+            }
 
             form.setAttribute("data-editing", "true");
             openPopup();
+            updateTotalPreview();
         } catch (error) {
             alert("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
         }
     });
     
-    // ** เพิ่มฟังก์ชัน Export PDF **
     async function exportToPdf() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l');
@@ -275,7 +289,7 @@
         const tableHeaders = ["วันที่", "Staff Oil", "Customers", "Income", "Commission", "Extra", "Expense", "Credit", "Cash", "เวลา"];
         const tableData = [];
         
-        const salesRows = document.querySelectorAll("#sales-list tbody tr");
+        const salesRows = document.querySelectorAll("#sales-list table tbody tr");
         if (salesRows.length === 0) {
             alert("ไม่มีข้อมูลให้ Export");
             return;
@@ -283,10 +297,8 @@
         
         salesRows.forEach(row => {
             const rowData = [];
-            row.querySelectorAll('td').forEach((cell, index) => {
-                if (index < 8 || index > 9) { // ข้ามคอลัมน์ Total Credit และ Total Cash
-                     rowData.push(cell.innerText);
-                }
+            row.querySelectorAll('td').forEach(cell => {
+                rowData.push(cell.innerText);
             });
             tableData.push(rowData);
         });
@@ -298,14 +310,12 @@
             startY: 28,
             head: [tableHeaders],
             body: tableData,
-            theme: 'grid',
-            styles: { font: 'Kanit' }
+            theme: 'grid'
         });
 
         doc.save(`ยอดขาย-${startDate}-${endDate}.pdf`);
     }
 
-    // ** เพิ่มฟังก์ชัน Export Excel **
     async function exportToExcel() {
         const table = document.querySelector("#sales-list table");
         if (!table) {
@@ -333,7 +343,6 @@
     document.getElementById("export-excel").addEventListener("click", exportToExcel);
     document.getElementById("export-pdf").addEventListener("click", exportToPdf);
 
-    // โหลดครั้งแรก
     window.onload = () => {
         const now = new Date();
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);

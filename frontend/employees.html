@@ -104,9 +104,10 @@
             employees.forEach(employee => {
                 const li = document.createElement('li');
                 li.className = 'employee-item';
-                li.dataset.id = employee._id;
+                // ใช้ employee._id ที่เป็น String
+                li.dataset.id = employee._id; 
                 li.innerHTML = `
-                    <span class="employee-name">${employee.name}</span>
+                    <span class="employee-name">${employee.Name}</span>
                     <button class="delete-btn" onclick="deleteEmployee('${employee._id}')">ลบ</button>
                 `;
                 employeeList.appendChild(li);
@@ -118,7 +119,8 @@
                 const response = await fetch(`${RENDER_BACKEND_URL}/api/employees`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name })
+                    // ส่งข้อมูลเป็น Name
+                    body: JSON.stringify({ Name: name, Position: 'พนักงาน' }) 
                 });
                 if (!response.ok) throw new Error('Failed to add employee');
                 newEmployeeNameInput.value = '';
